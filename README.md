@@ -1,12 +1,12 @@
 # Sample Codes for RTCore
-[中文](README.md) | English
+[中文](https://github.com/HMS-Core/hms-scene-RTcore-demo/blob/master/README_zh.md) | English
 ## Contents
 
-* [Introduction](#Introduction)
-* [Compilation](#Compilation)
-* [Demos](#Demos)
-* [Reference_Projects](#Reference_Projects)
-* [License](#License)
+* [Introduction](#introduction)
+* [Compilation](#compilation)
+* [Demos](#demos)
+* [Reference_Projects](#reference_projects)
+* [License](#license)
 
 ## Introduction
 This project mainly demonstrates how to use RTCore APIs to build hybrid rendering pipelines and simulate partial reflection in ray tracing. It provides two demos: one for drawing a triangle using RTCore APIs, and the other for implementing physically based rendering (PBR) pipelines and simulating partial reflection based on hybrid rendering.
@@ -62,6 +62,7 @@ This demo builds a set of ray tracing-based hybrid rendering pipelines to implem
 * `examples/hybridreflection/VulkanOnscreenPipeline`
 
 Below is an example of partial reflection:
+
 <img src="images/hybridreflection.png" width="500px">
 Remarks: The GLTF materials provided by Huawei contain six objects to be reflected: "Huawei", "Cone", "Sphere", "Capsule", "Cube", "Plane". You can use the `setDrawMeshName` function in `hybridreflection.cpp` to select the objects that require reflection.
 
