@@ -27,6 +27,7 @@
 ### [光线追踪画三角形](examples/triangle)
 本例子展示光线追踪内核最基本的使用，利用光线追踪对主光线与三角形求交来替代原有的光栅化的过程。整体流程如下图所示。
 <img src="images/trianglepipeline_zh.png" width="500px">
+
 1\. 通过相机坐标与屏幕上像素点的坐标计算世界坐标系的主光线（RaytracingTriangle.cpp 中 `generatePrimary`函数）；
 
 2\. 将光线从CPU侧拷贝到GPU侧（tiangle.cpp中`updateRayBuffers`函数）；
