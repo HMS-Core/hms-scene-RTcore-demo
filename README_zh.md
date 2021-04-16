@@ -1,6 +1,6 @@
 # 光线追踪内核使用的示例代码
 
-[English](README_en.md) | 中文
+[English](README.md) | 中文
 
 ## 目录
 * [简介](#简介)
@@ -45,6 +45,7 @@
 ### [用混合渲染管线实现局部反射](examples/hybridreflection)
 本例子搭建了一套基于光线追踪的混合渲染管线，实现了光追局部反射的后处理效果，具体流程如下图。
 <img src="images/hybridpipeline_zh.png" width="500px">
+
 1\. 通过传统光栅化的方法，实现了PBR的渲染管线(图中黄色虚线部分)，具体参考代码： 
 * `examples/hybridreflection/VulkanScenePipeline`
 * `examples/hybridreflection/VulkanImageBasedLighting`
