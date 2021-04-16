@@ -62,12 +62,15 @@
 * `examples/hybridreflection/VulkanOnscreenPipeline`
 
 最终局部反射的效果如下图所示：
+
 <img src="images/hybridreflection.png" width="500px">
 备注: 在我们提供的GLTF素材中，共包含：“Huawei”， “Cone”, “Sphere”, “Capsule”, “Cube”, “Plane” 6个待反射物体，我们可以在`hybridreflection.cpp`中通过`setDrawMeshName`函数选择哪些物体需要反射效果。
 
 ## 参考项目
 [1] https://github.com/SaschaWillems/Vulkan
-2.[learnOpenGL/PBR](https://learnopengl-cn.github.io/07%20PBR/02%20Lighting/#pbr)
+
+[2] [learnOpenGL/PBR](https://learnopengl-cn.github.io/07%20PBR/02%20Lighting/#pbr)
+
 [3] https://raytracing.github.io/books/RayTracingInOneWeekend.html
 
 ## 许可证
