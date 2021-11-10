@@ -30,15 +30,15 @@ struct Vertex {
     static VkVertexInputBindingDescription vertexInputBindingDescription;
     static std::vector<VkVertexInputAttributeDescription> vertexInputAttributeDescriptions;
     static VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo;
-    static VkVertexInputBindingDescription inputBindingDescription(uint32_t binding);
-    static VkVertexInputAttributeDescription inputAttributeDescription(uint32_t binding, uint32_t location,
+    static VkVertexInputBindingDescription InputBindingDescription(uint32_t binding);
+    static VkVertexInputAttributeDescription InputAttributeDescription(uint32_t binding, uint32_t location,
                                                                        VertexComponent component);
     static std::vector<VkVertexInputAttributeDescription>
-    inputAttributeDescriptions(uint32_t binding, const std::vector<VertexComponent> components);
+    InputAttributeDescriptions(uint32_t binding, const std::vector<VertexComponent> components);
     /** @brief Returns the default pipeline vertex input state create info structure for the requested vertex components
      */
     static VkPipelineVertexInputStateCreateInfo *
-    getPipelineVertexInputState(const std::vector<VertexComponent> components);
+    GetPipelineVertexInputState(const std::vector<VertexComponent> components);
 };
 } // namespace vkvert
 #endif // VULKANEXAMPLES_VULKANVERTEX_H

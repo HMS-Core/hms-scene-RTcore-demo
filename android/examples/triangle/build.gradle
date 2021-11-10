@@ -4,7 +4,7 @@ apply from: '../gradle/outputfilename.gradle'
 android {
     compileSdkVersion 26
     defaultConfig {
-        applicationId "de.saschawillems.triangle"
+        applicationId "com.huawei.rtcore.triangle"
         minSdkVersion 24
         targetSdkVersion 26
         versionCode 1
@@ -25,7 +25,7 @@ android {
         assets.srcDirs=['assets']}
     }
     buildTypes {
-        release {
+        debug {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -35,6 +35,7 @@ android {
             path "CMakeLists.txt"
         }
     }
+    ndkVersion '20.1.5948944'
 }
 
 task copyTask {
@@ -55,8 +56,6 @@ task copyTask {
        into 'assets/shaders/glsl/triangle'
        include '*.spv'
     }
-
-
 }
 
 preBuild.dependsOn copyTask

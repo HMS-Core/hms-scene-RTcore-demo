@@ -12,15 +12,14 @@ class VulkanPipelineFactory {
 public:
     static RenderPipelinePtr MakePipelineInstance(RenderPipelineType type, vks::VulkanDevice *vulkanDevice,
                                                   const ExtraPipelineResources *resources,
-                                                  const std::string vertShaderName,
-                                                  const std::string fragShaderName = "")
+                                                  const PipelineShaderCreateInfor &pipelineShaderCreateInfor)
     {
         auto createFunc = VulkanPipelineCreateFuncMgr::Instance().GetFunc(type);
         if (createFunc == nullptr) {
             return nullptr;
         }
 
-        return createFunc(vulkanDevice, resources, vertShaderName, fragShaderName);
+        return createFunc(vulkanDevice, resources, pipelineShaderCreateInfor);
     }
 };
 } // namespace vkpip

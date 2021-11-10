@@ -9,6 +9,7 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <iterator>
 #include <vector>
 #include "vulkan/vulkan.h"

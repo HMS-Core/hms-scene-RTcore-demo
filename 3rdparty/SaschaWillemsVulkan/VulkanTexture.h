@@ -70,7 +70,8 @@ public:
                                       VkImageUsageFlags  imageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT);
     void setupInitialImageViewCreateInfor(VkFormat format, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D, uint32_t levelCount = 1, uint32_t layerCount = 1);
     void setupInitialSamplerCreateInfor(VkFilter filter = VK_FILTER_LINEAR, uint32_t maxLod = 1);
-    void createTexture(vks::VulkanDevice *device, VkImageLayout finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, bool createSampler = true);
+    void createTexture(vks::VulkanDevice *device, VkImageLayout finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                       bool createSampler = true, VkQueue queue = VK_NULL_HANDLE);
 };
 
 struct TextureSampler {

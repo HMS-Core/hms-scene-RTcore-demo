@@ -22,7 +22,10 @@ namespace vks
 		}
 		else if (vks::android::screenDensity >= ACONFIGURATION_DENSITY_HIGH) {
 			scale = 2.0f;
-		};
+		}
+		else {
+		    scale = 4.0f;
+		}
 #endif
 
 		// Init ImGui
@@ -308,6 +311,7 @@ namespace vks
 
 		// Vertex buffer
 		if ((vertexBuffer.buffer == VK_NULL_HANDLE) || (vertexCount != imDrawData->TotalVtxCount)) {
+			vkDeviceWaitIdle(device->logicalDevice);
 			vertexBuffer.unmap();
 			vertexBuffer.destroy();
 			VK_CHECK_RESULT(device->createBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &vertexBuffer, vertexBufferSize));
@@ -320,6 +324,7 @@ namespace vks
 		// Index buffer
 		VkDeviceSize indexSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
 		if ((indexBuffer.buffer == VK_NULL_HANDLE) || (indexCount < imDrawData->TotalIdxCount)) {
+			vkDeviceWaitIdle(device->logicalDevice);
 			indexBuffer.unmap();
 			indexBuffer.destroy();
 			VK_CHECK_RESULT(device->createBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &indexBuffer, indexBufferSize));

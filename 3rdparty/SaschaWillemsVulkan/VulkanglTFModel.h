@@ -156,6 +156,7 @@ struct Node {
     glm::vec3 translation{};
     glm::vec3 scale{1.0f};
     glm::quat rotation{};
+    bool updated = true;
     glm::mat4 localMatrix();
     glm::mat4 getMatrix();
     void update();
@@ -216,10 +217,15 @@ public:
     // triangle vertices and indices for build bvh
     std::vector<uint32_t> indexBuffer;
     std::vector<vkvert::Vertex> vertexBuffer;
+    constexpr static uint32_t materialTextureCount = 5;
 
 private:
     vks::Texture2D *getTexture(uint32_t index);
     vks::Texture2D emptyTexture;
+    uint32_t nodeCount = 0;
+    uint32_t materialCount = 0;
+    std::vector<VkDescriptorImageInfo> textureDescriptors = {};
+    std::vector<VkDescriptorBufferInfo> nodeBufferDescriptors = {};
     void collectRelectionInformations(Node *node);
 
 public:
@@ -299,5 +305,24 @@ public:
     Node *findNode(Node *parent, uint32_t index);
     Node *nodeFromIndex(uint32_t index);
     void prepareNodeDescriptor(vkglTF::Node *node, VkDescriptorSetLayout descriptorSetLayout);
+    uint32_t getNodeCount() const {
+        return nodeCount;
+    };
+
+    uint32_t getMaterialCount() const {
+        return materialCount;
+    };
+
+    uint32_t getTextureCount()const{
+        return textures.size();
+    }
+
+    std::vector<VkDescriptorImageInfo>& getTextureDescriptors(){
+        return textureDescriptors;
+    }
+
+    std::vector<VkDescriptorBufferInfo>& getNodeBufferDescriptors(){
+        return nodeBufferDescriptors;
+    }
 };
 } // namespace vkglTF

@@ -7,22 +7,15 @@
 #include "VulkanPipelineCreateFuncMgr.h"
 
 namespace vkpip {
-REG_RENDER_PIPELINE(SKY_BOX_PIPELINE, VulkanSkyboxPipeline)
-
-VulkanSkyboxPipeline::~VulkanSkyboxPipeline()
+VulkanSkyboxPipeline::~VulkanSkyboxPipeline() noexcept
 {
     uniformBuffers.matrices.destroy();
     uniformBuffers.params.destroy();
+    environmentCube->destroy();
 }
 
-void VulkanSkyboxPipeline::preparePipelines(const VkRenderPass renderPass, const VkPipelineCache pipelineCache,
-                                            const std::vector<VkDescriptorSetLayout> *setLayouts,
-                                            const std::vector<VkPushConstantRange> *pushConstantRanges)
-{
-    VulkanPipelineBase::preparePipelines(renderPass, pipelineCache, setLayouts, pushConstantRanges);
-}
 
-void VulkanSkyboxPipeline::setupDescriptors()
+void VulkanSkyboxPipeline::SetupDescriptors()
 {
     // Descriptor Pool
     std::vector<VkDescriptorPoolSize> poolSizes = {
@@ -61,17 +54,19 @@ void VulkanSkyboxPipeline::setupDescriptors()
                            writeDescriptorSets.data(), 0, NULL);
 }
 
-void VulkanSkyboxPipeline::setupPipelines(const VkPipelineCache pipelineCache)
+void VulkanSkyboxPipeline::SetupPipelines(const VkPipelineCache pipelineCache)
 {
-    pipelineCreateAttributes.vertexInputState = *vkvert::Vertex::getPipelineVertexInputState(
-        {vkvert::VertexComponent::Position, vkvert::VertexComponent::Normal, vkvert::VertexComponent::UV});
+    pipelineCreateAttributes.vertexInputState = *vkvert::Vertex::GetPipelineVertexInputState(
+        {vkvert::VertexComponent::Position, vkvert::VertexComponent::Normal,
+        vkvert::VertexComponent::UV});
     // Skybox pipeline (background cube)
     pipelineCreateAttributes.rasterizationState.cullMode = VK_CULL_MODE_BACK_BIT;
+    pipelineCreateAttributes.depthStencilState.depthTestEnable = VK_TRUE;
     VK_CHECK_RESULT(
         vkCreateGraphicsPipelines(device->logicalDevice, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline));
 }
 
-void VulkanSkyboxPipeline::setupUniformBuffers()
+void VulkanSkyboxPipeline::SetupUniformBuffers()
 {
     // Skybox vertex shader uniform buffer
     VK_CHECK_RESULT(device->createBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -88,7 +83,7 @@ void VulkanSkyboxPipeline::setupUniformBuffers()
     VK_CHECK_RESULT(uniformBuffers.params.map());
 }
 
-void VulkanSkyboxPipeline::draw(VkCommandBuffer commandBuffer, vkglTF::Model *skybox)
+void VulkanSkyboxPipeline::Draw(VkCommandBuffer commandBuffer, vkglTF::Model *skybox)
 {
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0,
                             nullptr);
@@ -96,12 +91,12 @@ void VulkanSkyboxPipeline::draw(VkCommandBuffer commandBuffer, vkglTF::Model *sk
     skybox->draw(commandBuffer);
 }
 
-void VulkanSkyboxPipeline::updateMatrices(const buf::UBOMatrices *uboMatrices)
+void VulkanSkyboxPipeline::UpdateMatrices(const buf::UBOMatrices *uboMatrices)
 {
     memcpy(uniformBuffers.matrices.mapped, uboMatrices, sizeof(buf::UBOMatrices));
 }
 
-void VulkanSkyboxPipeline::updateParams(const buf::UBOParams *params)
+void VulkanSkyboxPipeline::UpdateParams(const buf::UBOParams *params)
 {
     memcpy(uniformBuffers.params.mapped, params, sizeof(buf::UBOParams));
 }

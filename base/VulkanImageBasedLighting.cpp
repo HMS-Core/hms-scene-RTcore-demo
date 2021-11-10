@@ -6,11 +6,11 @@
 #include "VulkanImageBasedLighting.h"
 #include "VulkanIBLPipelines.h"
 #include "VulkanRenderPass.h"
-#define CUBU_TEXTURE_NUM 6
+constexpr int CUBU_TEXTURE_NUM = 6;
 
 VkDescriptorSetLayout vkibl::descriptorSetLayoutImage = VK_NULL_HANDLE;
 
-void createFrameBuffer(VkFramebuffer &framebuffer, VkDevice logicalDevice, VkRenderPass renderPass,
+void CreateFrameBuffer(VkFramebuffer &framebuffer, VkDevice logicalDevice, VkRenderPass renderPass,
                        VkImageView imageView, uint32_t dim)
 {
     VkFramebufferCreateInfo framebufferCI = vks::initializers::framebufferCreateInfo();
@@ -23,7 +23,7 @@ void createFrameBuffer(VkFramebuffer &framebuffer, VkDevice logicalDevice, VkRen
     VK_CHECK_RESULT(vkCreateFramebuffer(logicalDevice, &framebufferCI, nullptr, &framebuffer));
 }
 
-void buildCopyImageCommand(VkCommandBuffer commandBuffer, VkImage srcImage, VkImage dstCube, uint32_t baseArrayLayer,
+void BuildCopyImageCommand(VkCommandBuffer commandBuffer, VkImage srcImage, VkImage dstCube, uint32_t baseArrayLayer,
                            uint32_t mipLevel, uint32_t copyWidth, uint32_t copyHeight)
 {
     vks::tools::setImageLayout(commandBuffer, srcImage, VK_IMAGE_ASPECT_COLOR_BIT,
@@ -56,7 +56,7 @@ void buildCopyImageCommand(VkCommandBuffer commandBuffer, VkImage srcImage, VkIm
                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 }
 
-glm::mat4 getMVP(uint32_t faceIndex)
+glm::mat4 GetMVP(uint32_t faceIndex)
 {
     std::vector<glm::mat4> matrices = {
         // POSITIVE_X
@@ -75,7 +75,7 @@ glm::mat4 getMVP(uint32_t faceIndex)
         glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
     };
 
-    glm::mat4 mvp = glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[faceIndex];
+    glm::mat4 mvp = glm::perspective(static_cast<float>((M_PI / 2.0)), 1.0f, 0.1f, 512.0f) * matrices[faceIndex];
     return mvp;
 }
 
@@ -102,7 +102,7 @@ struct RenderCubeConfigs {
     vks::Texture2D *srcTexture2D;
     uint32_t numMips;
     PushBlock pushBlock;
-    std::string vertShaderName = "hybridreflection/filtercube.vert.spv";
+    std::string vertShaderName = "hybridRayTracing/filtercube.vert.spv";
     std::string fragShaderName;
     bool preFilter = false;
 };
@@ -113,12 +113,13 @@ struct RenderPassBeginInfors {
     VkRect2D scissor;
 };
 
-RenderPassBeginInfors initialPassBeginInfor(VkRenderPass renderPass, VkFramebuffer framebuffer,
+RenderPassBeginInfors InitialPassBeginInfor(VkRenderPass renderPass, VkFramebuffer framebuffer,
                                             VkCommandBuffer commandBuffer, uint32_t width, uint32_t height)
 {
     VkClearValue clearValues[1];
     clearValues[0].color = {{0.0f, 0.0f, 0.2f, 0.0f}};
-    VkViewport viewport = vks::initializers::viewport((float)width, (float)height, 0.0f, 1.0f);
+    VkViewport viewport = vks::initializers::viewport(static_cast<float>(width), static_cast<float>(height),
+        0.0f, 1.0f);
     VkRect2D scissor = vks::initializers::rect2D(width, height, 0, 0);
 
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
@@ -136,7 +137,7 @@ RenderPassBeginInfors initialPassBeginInfor(VkRenderPass renderPass, VkFramebuff
     return beginInfors;
 }
 
-void renderCubeTextures(vks::VulkanDevice *device, VkQueue queue, VkRenderPass renderPass,
+void RenderCubeTextures(vks::VulkanDevice *device, VkQueue queue, VkRenderPass renderPass,
                         VkPipelineCache pipelineCache, RenderCubeConfigs renderCubeConfigs)
 {
     std::vector<VkPushConstantRange> pushConstantRanges = {
@@ -145,13 +146,13 @@ void renderCubeTextures(vks::VulkanDevice *device, VkQueue queue, VkRenderPass r
     };
     vkpip::ExtraPipelineResources resources;
     resources.textureCubeMap = renderCubeConfigs.environmentCube;
-    vkpip::VulkanRenderCubePipeline renderCubePipeline(device, &resources, renderCubeConfigs.vertShaderName,
-                                                       renderCubeConfigs.fragShaderName);
-    renderCubePipeline.preparePipelines(renderPass, pipelineCache, nullptr, &pushConstantRanges);
+    vkpip::VulkanRenderCubePipeline renderCubePipeline(
+        device, &resources, {renderCubeConfigs.vertShaderName, renderCubeConfigs.fragShaderName});
+    renderCubePipeline.PreparePipelines(renderPass, pipelineCache, nullptr, &pushConstantRanges, 0);
     VkCommandBuffer cmdBuf = device->createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-    RenderPassBeginInfors beginInfors =
-        initialPassBeginInfor(renderPass, renderCubeConfigs.framebuffer, cmdBuf, renderCubeConfigs.srcTexture2D->width,
-                              renderCubeConfigs.srcTexture2D->height);
+    RenderPassBeginInfors beginInfors = InitialPassBeginInfor(renderPass, renderCubeConfigs.framebuffer, cmdBuf,
+                                                              renderCubeConfigs.srcTexture2D->width,
+                                                              renderCubeConfigs.srcTexture2D->height);
     uint32_t dim = renderCubeConfigs.srcTexture2D->width;
     VkImageSubresourceRange subresourceRange = {};
     subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -163,7 +164,8 @@ void renderCubeTextures(vks::VulkanDevice *device, VkQueue queue, VkRenderPass r
                                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
     for (uint32_t m = 0; m < renderCubeConfigs.numMips; m++) {
         if (renderCubeConfigs.preFilter) {
-            renderCubeConfigs.pushBlock.roughness = (float)m / (float)(renderCubeConfigs.numMips - 1);
+            renderCubeConfigs.pushBlock.roughness = static_cast<float>(m) / static_cast<float>(
+                renderCubeConfigs.numMips - 1);
         }
         for (uint32_t f = 0; f < CUBU_TEXTURE_NUM; f++) {
             beginInfors.viewport.width = static_cast<float>(dim * std::pow(0.5f, m));
@@ -172,7 +174,7 @@ void renderCubeTextures(vks::VulkanDevice *device, VkQueue queue, VkRenderPass r
             // Render scene from cube face's point of view
             vkCmdBeginRenderPass(cmdBuf, &beginInfors.renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
             // Update shader push constant block
-            renderCubeConfigs.pushBlock.mvp = getMVP(f);
+            renderCubeConfigs.pushBlock.mvp = GetMVP(f);
 
             vkCmdPushConstants(cmdBuf, renderCubePipeline.pipelineLayout,
                                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushBlock),
@@ -182,9 +184,10 @@ void renderCubeTextures(vks::VulkanDevice *device, VkQueue queue, VkRenderPass r
                                     &renderCubePipeline.descriptorSet, 0, NULL);
             renderCubeConfigs.skybox->draw(cmdBuf);
             vkCmdEndRenderPass(cmdBuf);
-            buildCopyImageCommand(cmdBuf, renderCubeConfigs.srcTexture2D->image,
-                                  renderCubeConfigs.dstCubeTexture->image, f, m, beginInfors.viewport.width,
-                                  beginInfors.viewport.height);
+            BuildCopyImageCommand(cmdBuf, renderCubeConfigs.srcTexture2D->image,
+                                  renderCubeConfigs.dstCubeTexture->image, f, m,
+                                  static_cast<uint32_t>(beginInfors.viewport.width),
+                                  static_cast<uint32_t>(beginInfors.viewport.height));
         }
     }
 
@@ -194,7 +197,7 @@ void renderCubeTextures(vks::VulkanDevice *device, VkQueue queue, VkRenderPass r
     device->flushCommandBuffer(cmdBuf, queue);
 }
 
-vkibl::VulkanImageBasedLighting::~VulkanImageBasedLighting()
+vkibl::VulkanImageBasedLighting::~VulkanImageBasedLighting() noexcept
 {
     if (descriptorSetLayoutImage != VK_NULL_HANDLE) {
         vkDestroyDescriptorSetLayout(device->logicalDevice, descriptorSetLayoutImage, nullptr);
@@ -204,9 +207,13 @@ vkibl::VulkanImageBasedLighting::~VulkanImageBasedLighting()
     textures.irradianceCube.destroy();
     textures.prefilteredCube.destroy();
     textures.lutBrdf.destroy();
+    environmentCube->destroy();
+    descriptorSet = nullptr;
+    skybox = nullptr;
+    device = nullptr;
 }
 
-void vkibl::VulkanImageBasedLighting::generateBRDFLUT(VkPipelineCache pipelineCache, VkQueue queue)
+void vkibl::VulkanImageBasedLighting::GenerateBRDFLUT(VkPipelineCache pipelineCache, VkQueue queue)
 {
     auto tStart = std::chrono::high_resolution_clock::now();
 
@@ -220,14 +227,17 @@ void vkibl::VulkanImageBasedLighting::generateBRDFLUT(VkPipelineCache pipelineCa
 
     // FB, Att, RP, Pipe, etc.
     vkpass::VulkanRenderPass vulkanRenderPass(device);
-    vulkanRenderPass.addAttachmentDescriptions(VK_FORMAT_R16G16_SFLOAT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    vulkanRenderPass.prepareRenderPass();
-    vulkanRenderPass.createRenderPass();
+    vulkanRenderPass.AddAttachmentDescriptions(VK_FORMAT_R16G16_SFLOAT,
+                                               VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    vulkanRenderPass.PrepareRenderPass();
+    vulkanRenderPass.CreateRenderPass();
 
     VkFramebuffer framebuffer;
-    createFrameBuffer(framebuffer, device->logicalDevice, vulkanRenderPass.renderpass, textures.lutBrdf.view, dim);
-    vkpip::VulkanGenBRDFFlutPipeline genBrdfFlutPipeline(device, nullptr);
-    genBrdfFlutPipeline.preparePipelines(vulkanRenderPass.renderpass, pipelineCache);
+    CreateFrameBuffer(framebuffer, device->logicalDevice, vulkanRenderPass.renderpass, textures.lutBrdf.view, dim);
+    vkpip::VulkanGenBRDFFlutPipeline genBrdfFlutPipeline(
+        device, nullptr, {"hybridRayTracing/genbrdflut.vert.spv", "hybridRayTracing/genbrdflut.frag.spv"});
+    genBrdfFlutPipeline.PreparePipelines(vulkanRenderPass.renderpass, pipelineCache, nullptr,
+                                         nullptr, 0);
 
     // Render
     VkClearValue clearValues[1];
@@ -243,7 +253,7 @@ void vkibl::VulkanImageBasedLighting::generateBRDFLUT(VkPipelineCache pipelineCa
 
     VkCommandBuffer cmdBuf = device->createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
     vkCmdBeginRenderPass(cmdBuf, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    VkViewport viewport = vks::initializers::viewport((float)dim, (float)dim, 0.0f, 1.0f);
+    VkViewport viewport = vks::initializers::viewport(static_cast<float>(dim), static_cast<float>(dim), 0.0f, 1.0f);
     VkRect2D scissor = vks::initializers::rect2D(dim, dim, 0, 0);
     vkCmdSetViewport(cmdBuf, 0, 1, &viewport);
     vkCmdSetScissor(cmdBuf, 0, 1, &scissor);
@@ -264,7 +274,7 @@ void vkibl::VulkanImageBasedLighting::generateBRDFLUT(VkPipelineCache pipelineCa
 struct Offscreen {
     vks::Texture2D texture;
     VkFramebuffer framebuffer;
-    void prepareOffscreen(vks::VulkanDevice *device, VkRenderPass renderPass, VkQueue queue, VkFormat format,
+    void PrepareOffscreen(vks::VulkanDevice *device, VkRenderPass renderPass, VkQueue queue, VkFormat format,
                           uint32_t dim)
     {
         texture.setupInitilaImageCreateInfor(format, dim, dim, 1, 1,
@@ -275,7 +285,7 @@ struct Offscreen {
         texture.imageViewCreateInfors.imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
         texture.createTexture(device, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, false);
 
-        createFrameBuffer(framebuffer, device->logicalDevice, renderPass, texture.view, dim);
+        CreateFrameBuffer(framebuffer, device->logicalDevice, renderPass, texture.view, dim);
 
         VkCommandBuffer layoutCmd = device->createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
         vks::tools::setImageLayout(layoutCmd, texture.image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
@@ -286,7 +296,7 @@ struct Offscreen {
 // Offfscreen framebuffer
 
 // Generate an irradiance cube map from the environment cube map
-void vkibl::VulkanImageBasedLighting::generateIrradianceCube(VkPipelineCache pipelineCache, VkQueue queue)
+void vkibl::VulkanImageBasedLighting::GenerateIrradianceCube(VkPipelineCache pipelineCache, VkQueue queue)
 {
     auto tStart = std::chrono::high_resolution_clock::now();
 
@@ -305,14 +315,14 @@ void vkibl::VulkanImageBasedLighting::generateIrradianceCube(VkPipelineCache pip
 
     // FB, Att, RP, Pipe, etc.
     vkpass::VulkanRenderPass vulkanRenderPass(device);
-    vulkanRenderPass.addAttachmentDescriptions(format, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    vulkanRenderPass.prepareRenderPass();
-    vulkanRenderPass.createRenderPass();
+    vulkanRenderPass.AddAttachmentDescriptions(format, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    vulkanRenderPass.PrepareRenderPass();
+    vulkanRenderPass.CreateRenderPass();
     Offscreen offscreen;
-    offscreen.prepareOffscreen(device, vulkanRenderPass.renderpass, queue, format, dim);
+    offscreen.PrepareOffscreen(device, vulkanRenderPass.renderpass, queue, format, dim);
     PushBlock pushBlock;
-    pushBlock.deltaPhi = (2.0f * float(M_PI)) / 180.0f;
-    pushBlock.deltaTheta = (0.5f * float(M_PI)) / 64.0f;
+    pushBlock.deltaPhi = (2.0f * static_cast<float>(M_PI)) / 180.0f;
+    pushBlock.deltaTheta = (0.5f * static_cast<float>(M_PI)) / 64.0f;
 
     RenderCubeConfigs renderCubeConfigs = {environmentCube,
                                            skybox,
@@ -321,10 +331,10 @@ void vkibl::VulkanImageBasedLighting::generateIrradianceCube(VkPipelineCache pip
                                            &offscreen.texture,
                                            numMips,
                                            pushBlock,
-                                           "hybridreflection/filtercube.vert.spv",
-                                           "hybridreflection/irradiancecube.frag.spv"};
+                                           "hybridRayTracing/filtercube.vert.spv",
+                                           "hybridRayTracing/irradiancecube.frag.spv"};
 
-    renderCubeTextures(device, queue, vulkanRenderPass.renderpass, pipelineCache, renderCubeConfigs);
+    RenderCubeTextures(device, queue, vulkanRenderPass.renderpass, pipelineCache, renderCubeConfigs);
     vkDestroyFramebuffer(device->logicalDevice, offscreen.framebuffer, nullptr);
     offscreen.texture.destroy();
     auto tEnd = std::chrono::high_resolution_clock::now();
@@ -335,7 +345,7 @@ void vkibl::VulkanImageBasedLighting::generateIrradianceCube(VkPipelineCache pip
 // Prefilter environment cubemap
 // See
 // https://placeholderart.wordpress.com/2015/07/28/implementation-notes-runtime-environment-map-filtering-for-image-based-lighting/
-void vkibl::VulkanImageBasedLighting::generatePrefilteredCube(VkPipelineCache pipelineCache, VkQueue queue)
+void vkibl::VulkanImageBasedLighting::GeneratePrefilteredCube(VkPipelineCache pipelineCache, VkQueue queue)
 {
     auto tStart = std::chrono::high_resolution_clock::now();
     const VkFormat format = VK_FORMAT_R16G16B16A16_SFLOAT;
@@ -352,11 +362,11 @@ void vkibl::VulkanImageBasedLighting::generatePrefilteredCube(VkPipelineCache pi
 
     // Pre-filtered cube map
     vkpass::VulkanRenderPass vulkanRenderPass(device);
-    vulkanRenderPass.addAttachmentDescriptions(format, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    vulkanRenderPass.prepareRenderPass();
-    vulkanRenderPass.createRenderPass();
+    vulkanRenderPass.AddAttachmentDescriptions(format, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    vulkanRenderPass.PrepareRenderPass();
+    vulkanRenderPass.CreateRenderPass();
     Offscreen offscreen;
-    offscreen.prepareOffscreen(device, vulkanRenderPass.renderpass, queue, format, dim);
+    offscreen.PrepareOffscreen(device, vulkanRenderPass.renderpass, queue, format, dim);
     PushBlock pushBlock;
     pushBlock.numSamples = 32u;
     RenderCubeConfigs renderCubeConfigs = {environmentCube,
@@ -366,10 +376,10 @@ void vkibl::VulkanImageBasedLighting::generatePrefilteredCube(VkPipelineCache pi
                                            &offscreen.texture,
                                            numMips,
                                            pushBlock,
-                                           "hybridreflection/filtercube.vert.spv",
-                                           "hybridreflection/prefilterenvmap.frag.spv",
+                                           "hybridRayTracing/filtercube.vert.spv",
+                                           "hybridRayTracing/prefilterenvmap.frag.spv",
                                            true};
-    renderCubeTextures(device, queue, vulkanRenderPass.renderpass, pipelineCache, renderCubeConfigs);
+    RenderCubeTextures(device, queue, vulkanRenderPass.renderpass, pipelineCache, renderCubeConfigs);
     vkDestroyFramebuffer(device->logicalDevice, offscreen.framebuffer, nullptr);
     offscreen.texture.destroy();
     auto tEnd = std::chrono::high_resolution_clock::now();
@@ -378,7 +388,7 @@ void vkibl::VulkanImageBasedLighting::generatePrefilteredCube(VkPipelineCache pi
               << std::endl;
 }
 
-void vkibl::VulkanImageBasedLighting::setupDescriptors()
+void vkibl::VulkanImageBasedLighting::SetupDescriptors()
 {
     // 0: samplerIrradiance
     // 1: prefilteredMap
@@ -431,15 +441,15 @@ void vkibl::VulkanImageBasedLighting::setupDescriptors()
                            writeDescriptorSets.data(), 0, nullptr);
 }
 
-void vkibl::VulkanImageBasedLighting::generateIBLTextures(VkPipelineCache pipelineCache, VkQueue queue)
+void vkibl::VulkanImageBasedLighting::GenerateIBLTextures(VkPipelineCache pipelineCache, VkQueue queue)
 {
-    this->generateBRDFLUT(pipelineCache, queue);
-    this->generateIrradianceCube(pipelineCache, queue);
-    this->generatePrefilteredCube(pipelineCache, queue);
-    this->setupDescriptors();
+    this->GenerateBRDFLUT(pipelineCache, queue);
+    this->GenerateIrradianceCube(pipelineCache, queue);
+    this->GeneratePrefilteredCube(pipelineCache, queue);
+    this->SetupDescriptors();
 }
 
-void vkibl::VulkanImageBasedLighting::bindDescriptorSet(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
+void vkibl::VulkanImageBasedLighting::BindDescriptorSet(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
                                                         uint32_t bindImageSet)
 {
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, bindImageSet, 1,

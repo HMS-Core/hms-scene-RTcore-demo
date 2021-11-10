@@ -11,15 +11,14 @@ namespace vkpip {
 class VulkanTrianglePipeline : public VulkanPipelineBase {
 public:
     VulkanTrianglePipeline(vks::VulkanDevice *vulkanDevice, const ExtraPipelineResources *resources,
-                           std::string vertShaderName = "triangle/fullscreen.vert.spv",
-                           std::string fragShaderName = "triangle/showhit.frag.spv")
-        : VulkanPipelineBase(vulkanDevice, resources, vertShaderName, fragShaderName),
+                           const PipelineShaderCreateInfor &pipelineShaderCreateInfor)
+        : VulkanPipelineBase(vulkanDevice, resources, pipelineShaderCreateInfor),
           hitStorageBuffer(resources->hitBuffer),
           vertexBuffer(resources->vertexBuffer),
           indexBuffer(resources->indexBuffer){};
-    virtual ~VulkanTrianglePipeline();
-    virtual void updateParams(const buf::UBOParams *uboParams) override;
-    virtual void draw(VkCommandBuffer commandBuffer, PipelineDrawInfor *pipelineDrawInfor) override;
+    ~VulkanTrianglePipeline() noexcept override;
+    void UpdateParams(const buf::UBOParams *uboParams) override;
+    void Draw(VkCommandBuffer commandBuffer, PipelineDrawInfor *pipelineDrawInfor) override;
 
 protected:
     struct UniformBufferSet {
@@ -30,9 +29,9 @@ protected:
     vks::Buffer *indexBuffer = nullptr;
     vks::Buffer *hitStorageBuffer = nullptr;
 
-    virtual void setupDescriptors() override;
-    virtual void setupUniformBuffers() override;
-    virtual void setupPipelines(const VkPipelineCache pipelineCache) override;
+    void SetupDescriptors() override;
+    void SetupUniformBuffers() override;
+    void SetupPipelines(const VkPipelineCache pipelineCache) override;
 };
 } // namespace vkpip
 

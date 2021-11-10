@@ -10,7 +10,7 @@
 
 namespace vkpip {
 using RenderPipelineCreateFunc = std::function<RenderPipelinePtr(
-    vks::VulkanDevice *, const vkpip::ExtraPipelineResources *, const std::string, const std::string)>;
+    vks::VulkanDevice *, const ExtraPipelineResources *, const PipelineShaderCreateInfor &)>;
 class VulkanPipelineCreateFuncMgr {
 public:
     static VulkanPipelineCreateFuncMgr &Instance();
@@ -46,12 +46,20 @@ public:
     ~VulkanPipelineCreateFuncRegister() = default;
 };
 
-#define REG_RENDER_PIPELINE(type, className)                                                             \
-    static VulkanPipelineCreateFuncRegister g_reg##className##type(                                      \
-        type, [](vks::VulkanDevice *vulkanDevice, const vkpip::ExtraPipelineResources *resources,        \
-                 const std::string vertShaderName, const std::string fragShaderName) {                   \
-            return std::make_unique<className>(vulkanDevice, resources, vertShaderName, fragShaderName); \
-        });
+template<typename PipelineRegClassType>
+inline void RegRenderPipeline(RenderPipelineType type)
+{
+    static VulkanPipelineCreateFuncRegister regPipeline(type,
+        [] (vks::VulkanDevice *vulkanDevice, const vkpip::ExtraPipelineResources *resources,
+            const PipelineShaderCreateInfor &pipelineShaderCreateInfor)
+        {
+            return std::make_unique<PipelineRegClassType>(
+                vulkanDevice,
+                resources,
+                pipelineShaderCreateInfor);
+        }
+    );
+}
 } // namespace vkpip
 
 #endif // VULKANEXAMPLES_VULKANPIPELINECREATEFUNCMGR_H

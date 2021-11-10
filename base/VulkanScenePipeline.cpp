@@ -7,18 +7,19 @@
 #include "VulkanPipelineCreateFuncMgr.h"
 
 namespace vkpip {
-REG_RENDER_PIPELINE(SCENE_PBR_PIPELINE, VulkanScenePipeline)
-VulkanScenePipeline::~VulkanScenePipeline()
+VulkanScenePipeline::~VulkanScenePipeline() noexcept
 {
     uniformBuffers.matrices.destroy();
     uniformBuffers.params.destroy();
+    ibl = nullptr;
 }
 
-void VulkanScenePipeline::setupInitialPipelineAttributes()
+void VulkanScenePipeline::SetupInitialPipelineAttributes()
 {
-    pipelineCreateAttributes.vertexInputState = *vkvert::Vertex::getPipelineVertexInputState(
-        {vkvert::VertexComponent::Position, vkvert::VertexComponent::Normal, vkvert::VertexComponent::UV,
-         vkvert::VertexComponent::Joint0, vkvert::VertexComponent::Weight0});
+    pipelineCreateAttributes.vertexInputState = *vkvert::Vertex::GetPipelineVertexInputState(
+        {vkvert::VertexComponent::Position, vkvert::VertexComponent::Normal,
+            vkvert::VertexComponent::UV, vkvert::VertexComponent::Joint0,
+            vkvert::VertexComponent::Weight0});
     pipelineCreateAttributes.rasterizationState.cullMode = VK_CULL_MODE_BACK_BIT;
 
     // Enable depth test and write
@@ -26,14 +27,14 @@ void VulkanScenePipeline::setupInitialPipelineAttributes()
     pipelineCreateAttributes.depthStencilState.depthTestEnable = VK_TRUE;
 }
 
-void VulkanScenePipeline::setupPipelines(const VkPipelineCache pipelineCache)
+void VulkanScenePipeline::SetupPipelines(const VkPipelineCache pipelineCache)
 {
-    this->setupInitialPipelineAttributes();
+    this->SetupInitialPipelineAttributes();
     VK_CHECK_RESULT(
         vkCreateGraphicsPipelines(device->logicalDevice, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline));
 }
 
-void VulkanScenePipeline::setupUniformBuffers()
+void VulkanScenePipeline::SetupUniformBuffers()
 {
     uniformBuffers.matrices.destroy();
     uniformBuffers.params.destroy();
@@ -53,7 +54,7 @@ void VulkanScenePipeline::setupUniformBuffers()
     VK_CHECK_RESULT(uniformBuffers.matrices.map());
 }
 
-void VulkanScenePipeline::setupDescriptors()
+void VulkanScenePipeline::SetupDescriptors()
 {
     // Descriptor Pool
     std::vector<VkDescriptorPoolSize> poolSizes = {
@@ -87,33 +88,26 @@ void VulkanScenePipeline::setupDescriptors()
                            writeDescriptorSets.data(), 0, NULL);
 }
 
-void VulkanScenePipeline::updateMatrices(const buf::UBOMatrices *uboMatrices)
+void VulkanScenePipeline::UpdateMatrices(const buf::UBOMatrices *uboMatrices)
 {
     memcpy(uniformBuffers.matrices.mapped, uboMatrices, sizeof(buf::UBOMatrices));
 }
 
-void VulkanScenePipeline::updateParams(const buf::UBOParams *params)
+void VulkanScenePipeline::UpdateParams(const buf::UBOParams *params)
 {
     memcpy(uniformBuffers.params.mapped, params, sizeof(buf::UBOParams));
 }
 
-void VulkanScenePipeline::preparePipelines(const VkRenderPass renderPass, const VkPipelineCache pipelineCache,
-                                           const std::vector<VkDescriptorSetLayout> *setLayouts,
-                                           const std::vector<VkPushConstantRange> *pushConstantRanges)
+void VulkanScenePipeline::Draw(VkCommandBuffer commandBuffer, vkglTF::Model *scene)
 {
-    VulkanPipelineBase::preparePipelines(renderPass, pipelineCache, setLayouts, pushConstantRanges);
-}
-
-void VulkanScenePipeline::draw(VkCommandBuffer commandBuffer, vkglTF::Model *scene)
-{
-    // We must call preparePipelines first
+    // We must call PreparePipelines first
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     uint32_t bindSet = 0;
     // set 0: 2 ubo buffers: matrices and params
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, bindSet, 1, &descriptorSet,
                             0, nullptr);
     // set 1: 3 ibl cube textures
-    ibl->bindDescriptorSet(commandBuffer, pipelineLayout, bindSet + 1);
+    ibl->BindDescriptorSet(commandBuffer, pipelineLayout, bindSet + 1);
     // set 2: 5 marerial textures
     // set 3: 1 ubo matrices
     scene->draw(commandBuffer,

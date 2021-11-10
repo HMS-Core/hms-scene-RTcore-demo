@@ -5,7 +5,7 @@
 
 #include "VulkanShader.h"
 namespace vks {
-VkPipelineShaderStageCreateInfo VulkanShader::loadShader(vks::VulkanDevice *device, std::string fileName,
+VkPipelineShaderStageCreateInfo VulkanShader::LoadShader(vks::VulkanDevice *device, std::string fileName,
                                                          VkShaderStageFlagBits stage)
 {
     VkPipelineShaderStageCreateInfo shaderStage = {};
@@ -13,7 +13,7 @@ VkPipelineShaderStageCreateInfo VulkanShader::loadShader(vks::VulkanDevice *devi
     shaderStage.stage = stage;
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
     shaderStage.module = vks::tools::loadShader(androidApp->activity->assetManager,
-                                                (getShadersPath() + fileName).c_str(), device->logicalDevice);
+                                                (GetShadersPath() + fileName).c_str(), device->logicalDevice);
 #else
     shaderStage.module = vks::tools::loadShader((getShadersPath() + fileName).c_str(), device->logicalDevice);
 #endif
@@ -22,7 +22,7 @@ VkPipelineShaderStageCreateInfo VulkanShader::loadShader(vks::VulkanDevice *devi
     return shaderStage;
 }
 
-std::string VulkanShader::getShadersPath() const
+std::string VulkanShader::GetShadersPath() const
 {
     return getAssetPath() + "shaders/" + shaderDir + "/";
 }

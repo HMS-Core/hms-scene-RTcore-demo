@@ -122,6 +122,7 @@ VkResult Buffer::invalidate(VkDeviceSize size, VkDeviceSize offset)
  */
 void Buffer::destroy()
 {
+    unmap();
     if (buffer) {
         vkDestroyBuffer(device, buffer, nullptr);
     }

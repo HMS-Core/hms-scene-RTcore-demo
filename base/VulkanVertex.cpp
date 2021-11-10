@@ -12,12 +12,12 @@ VkVertexInputBindingDescription Vertex::vertexInputBindingDescription;
 std::vector<VkVertexInputAttributeDescription> Vertex::vertexInputAttributeDescriptions;
 VkPipelineVertexInputStateCreateInfo Vertex::pipelineVertexInputStateCreateInfo;
 
-VkVertexInputBindingDescription Vertex::inputBindingDescription(uint32_t binding)
+VkVertexInputBindingDescription Vertex::InputBindingDescription(uint32_t binding)
 {
     return VkVertexInputBindingDescription({binding, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX});
 }
 
-VkVertexInputAttributeDescription Vertex::inputAttributeDescription(uint32_t binding, uint32_t location,
+VkVertexInputAttributeDescription Vertex::InputAttributeDescription(uint32_t binding, uint32_t location,
                                                                     VertexComponent component)
 {
     switch (component) {
@@ -26,10 +26,10 @@ VkVertexInputAttributeDescription Vertex::inputAttributeDescription(uint32_t bin
                 location, binding, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, pos)});
         case VertexComponent::Normal:
             return VkVertexInputAttributeDescription({
-                location, binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)});
+                location, binding, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, normal)});
         case VertexComponent::UV:
             return VkVertexInputAttributeDescription({
-                location, binding, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv)});
+                location, binding, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, uv)});
         case VertexComponent::Color:
             return VkVertexInputAttributeDescription({
                 location, binding, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, color)});
@@ -47,23 +47,23 @@ VkVertexInputAttributeDescription Vertex::inputAttributeDescription(uint32_t bin
     }
 }
 
-std::vector<VkVertexInputAttributeDescription> Vertex::inputAttributeDescriptions(uint32_t binding,
+std::vector<VkVertexInputAttributeDescription> Vertex::InputAttributeDescriptions(uint32_t binding,
     const std::vector<VertexComponent> components)
 {
     std::vector<VkVertexInputAttributeDescription> result;
     uint32_t location = 0;
     for (VertexComponent component : components) {
-        result.push_back(Vertex::inputAttributeDescription(binding, location, component));
+        result.push_back(Vertex::InputAttributeDescription(binding, location, component));
         location++;
     }
     return result;
 }
 
 /** @brief Returns the default pipeline vertex input state create info structure for the requested vertex components */
-VkPipelineVertexInputStateCreateInfo *Vertex::getPipelineVertexInputState(const std::vector<VertexComponent> components)
+VkPipelineVertexInputStateCreateInfo *Vertex::GetPipelineVertexInputState(const std::vector<VertexComponent> components)
 {
-    vertexInputBindingDescription = Vertex::inputBindingDescription(0);
-    Vertex::vertexInputAttributeDescriptions = Vertex::inputAttributeDescriptions(0, components);
+    vertexInputBindingDescription = Vertex::InputBindingDescription(0);
+    Vertex::vertexInputAttributeDescriptions = Vertex::InputAttributeDescriptions(0, components);
     pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
     pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = &Vertex::vertexInputBindingDescription;

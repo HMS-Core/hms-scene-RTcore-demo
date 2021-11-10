@@ -180,7 +180,7 @@ VkResult VulkanDevice::createLogicalDevice(VkPhysicalDeviceFeatures enabledFeatu
         queueInfo.pQueuePriorities = &defaultQueuePriority;
         queueCreateInfos.push_back(queueInfo);
     } else {
-        queueFamilyIndices.graphics = VK_NULL_HANDLE;
+        queueFamilyIndices.graphics = 0;
     }
 
     // Dedicated compute queue

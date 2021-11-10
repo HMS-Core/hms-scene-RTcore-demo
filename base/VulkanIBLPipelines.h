@@ -11,24 +11,22 @@ namespace vkpip {
 class VulkanGenBRDFFlutPipeline : public VulkanPipelineBase {
 public:
     VulkanGenBRDFFlutPipeline(vks::VulkanDevice *vulkanDevice, const ExtraPipelineResources *resources,
-                              const std::string vertShaderName = "hybridreflection/genbrdflut.vert.spv",
-                              const std::string fragShaderName = "hybridreflection/genbrdflut.frag.spv")
-        : VulkanPipelineBase(vulkanDevice, resources, vertShaderName, fragShaderName)
+                              const PipelineShaderCreateInfor &pipelineShaderCreateInfor)
+        : VulkanPipelineBase(vulkanDevice, resources, pipelineShaderCreateInfor)
     {
     }
     ~VulkanGenBRDFFlutPipeline() = default;
 
 protected:
-    virtual void setupDescriptors() override;
-    virtual void setupPipelines(const VkPipelineCache pipelineCache) override;
+    void SetupDescriptors() override;
+    void SetupPipelines(const VkPipelineCache pipelineCache) override;
 };
 
 class VulkanRenderCubePipeline : public VulkanPipelineBase {
 public:
     VulkanRenderCubePipeline(vks::VulkanDevice *vulkanDevice, const ExtraPipelineResources *resources,
-                             const std::string vertShaderName = "hybridreflection/filtercube.vert.spv",
-                             const std::string fragShaderName = "hybridreflection/irradiancecube.frag.spv")
-        : VulkanPipelineBase(vulkanDevice, resources, vertShaderName, fragShaderName),
+                             const PipelineShaderCreateInfor &pipelineShaderCreateInfor)
+        : VulkanPipelineBase(vulkanDevice, resources, pipelineShaderCreateInfor),
           textureCubeMap(resources->textureCubeMap)
     {
     }
@@ -36,8 +34,8 @@ public:
 
 protected:
     vks::TextureCubeMap *textureCubeMap = nullptr;
-    virtual void setupDescriptors() override;
-    virtual void setupPipelines(const VkPipelineCache pipelineCache) override;
+    void SetupDescriptors() override;
+    void SetupPipelines(const VkPipelineCache pipelineCache) override;
 };
 } // namespace vkpip
 

@@ -19,19 +19,19 @@ public:
         VkAttachmentReference depthReference{};
         std::array<VkSubpassDependency, 2> dependencies;
     } renderpassCreateAttributes;
-    VkRenderPassCreateInfo renderPassCreateInfo;
+    VkRenderPassCreateInfo renderPassCreateInfo{};
     VkRenderPass renderpass = VK_NULL_HANDLE;
     bool prepare = false;
 
-    VulkanRenderPass(vks::VulkanDevice *device) : device(device){};
+    explicit VulkanRenderPass(vks::VulkanDevice *device) : device(device){};
     ~VulkanRenderPass();
-    void prepareRenderPass();
-    void addAttachmentDescriptions(VkFormat format, VkImageLayout finalLayout);
-    void createRenderPass();
+    void PrepareRenderPass();
+    void AddAttachmentDescriptions(VkFormat format, VkImageLayout finalLayout);
+    void CreateRenderPass();
 
 protected:
-    void setRenderpassCreateInfor();
-    void setRenderpassAttributes();
+    void SetRenderpassCreateInfor();
+    void SetRenderpassAttributes();
 };
 } // namespace vkpass
 

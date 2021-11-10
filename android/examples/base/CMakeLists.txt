@@ -12,20 +12,16 @@ endif ()
 
 set(PROJ_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -DVK_USE_PLATFORM_ANDROID_KHR")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O2 -DNDEBUG -DVK_USE_PLATFORM_ANDROID_KHR")
 file(GLOB BASE_SRC "${PROJ_ROOT}/base/*.cpp" "${PROJ_ROOT}/3rdparty/imgui/*.cpp" "${PROJ_ROOT}/3rdparty/SaschaWillemsVulkan/*.cpp" "${PROJ_ROOT}/3rdparty/SaschaWillemsVulkan/*.hpp")
 
 # librtcore.so导入
-set(RAYSHOP_LIB rtcore)
-
 include_directories(${PROJ_ROOT}/include)
-
-ADD_LIBRARY(
-		${RAYSHOP_LIB}
+add_library(
+		rtcore
 		SHARED
 		IMPORTED)
-
-SET_TARGET_PROPERTIES(${RAYSHOP_LIB}
+set_target_properties(rtcore
 		PROPERTIES IMPORTED_LOCATION
 		${PROJ_ROOT}/libs/${ANDROID_ABI}/librtcore.so)
 
@@ -38,6 +34,7 @@ include_directories(${PROJ_ROOT}/3rdparty/gli)
 include_directories(${PROJ_ROOT}/3rdparty/imgui)
 include_directories(${PROJ_ROOT}/3rdparty/tinygltf)
 include_directories(${ANDROID_NDK}/sources/android/native_app_glue)
+include_directories(${PROJ_ROOT}/data/shaders/glsl)
 
 set(KTX_DIR ${PROJ_ROOT}/3rdparty/ktx)
 set(KTX_SOURCES
@@ -65,5 +62,5 @@ target_link_libraries(
 	z
 	libktx
 	vulkan
-	${RAYSHOP_LIB}
+	rtcore
 )

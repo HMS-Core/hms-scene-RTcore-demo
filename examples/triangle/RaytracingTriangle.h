@@ -5,16 +5,15 @@
 
 #ifndef VULKANEXAMPLES_RAYTRACINGTRIANGLE_H
 #define VULKANEXAMPLES_RAYTRACINGTRIANGLE_H
-#include "vulkanexamplebase.h"
+#include "SaschaWillemsVulkan/vulkanexamplebase.h"
 #include "VulkanVertex.h"
 #include "BufferInfor.h"
 #include "Traversal.h"
 #include "VulkanTraceRay.h"
 #include "VulkanTrianglePipeline.h"
-#include "common.h"
 #define ENABLE_VALIDATION false
-#define MAXRAY_LENGTH 0xFFFF
-#define HIT_BUFFER_DOWN_SCALE 0.5
+constexpr int MAXRAY_LENGTH = 0xFFFF;
+constexpr float HIT_BUFFER_DOWN_SCALE = 0.5;
 
 class RaytracingTriangle : public VulkanExampleBase {
     struct ScreenCoordinates {
@@ -29,7 +28,7 @@ public:
     {
         title = "RayTracingTriangle";
         camera.type = Camera::CameraType::lookat;
-        camera.setPerspective(60.0f, (float)width / (float)height, 0.1f, 256.0f);
+        camera.setPerspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 256.0f);
         camera.rotationSpeed = 0.25f;
         camera.movementSpeed = 0.1f;
         camera.setPosition({0.0f, 0.f, 2.5f});
@@ -41,23 +40,23 @@ public:
         rayDatas.resize(rayCount);
     };
 
-    ~RaytracingTriangle();
-    void updateCamPosition();
-    void upateParams();
-    void getScreenCoordinates(ScreenCoordinates &screen);
-    void getPixelDir(const float u, const float v, const ScreenCoordinates &screen, RayShop::Ray &primaryRay);
-    void updateRayBuffers();
-    void generatePrimaryRay();
-    void prepareVertices();
-    void prepareStorageBuffers();
+    ~RaytracingTriangle() noexcept override;
+    void UpdateCamPosition();
+    void UpateParams();
+    void GetScreenCoordinates(ScreenCoordinates &screen);
+    void GetPixelDir(const float u, const float v, const ScreenCoordinates &screen, RayShop::Ray &primaryRay);
+    void UpdateRayBuffers();
+    void GeneratePrimaryRay();
+    void PrepareVertices();
+    void PrepareStorageBuffers();
     void buildCommandBuffers() override;
-    void updateUniformBuffers();
-    void preparePipelines();
-    void prepareRayTracing();
-    void draw();
+    void UpdateUniformBuffers();
+    void PreparePipelines();
+    void PrepareRayTracing();
+    void Draw();
     void prepare() override;
-    virtual void render() override;
-    virtual void OnUpdateUIOverlay(vks::UIOverlay *overlay) override;
+    void render() override;
+    void OnUpdateUIOverlay(vks::UIOverlay *overlay) override;
 
 private:
     vks::Buffer rayBuffer;

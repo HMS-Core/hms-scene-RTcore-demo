@@ -4,8 +4,9 @@
  */
 
 #include "VulkanRenderPass.h"
+#include "Log.h"
 namespace vkpass {
-bool hasDepth(VkFormat format)
+bool HasDepth(VkFormat format)
 {
     std::vector<VkFormat> formats = {
         VK_FORMAT_D16_UNORM,         VK_FORMAT_X8_D24_UNORM_PACK32, VK_FORMAT_D32_SFLOAT,
@@ -14,7 +15,7 @@ bool hasDepth(VkFormat format)
     return std::find(formats.begin(), formats.end(), format) != std::end(formats);
 }
 
-bool hasStencil(VkFormat format)
+bool HasStencil(VkFormat format)
 {
     std::vector<VkFormat> formats = {
         VK_FORMAT_S8_UINT,
@@ -25,9 +26,9 @@ bool hasStencil(VkFormat format)
     return std::find(formats.begin(), formats.end(), format) != std::end(formats);
 }
 
-bool isDepthStencil(VkFormat format)
+bool IsDepthStencil(VkFormat format)
 {
-    return (hasDepth(format) || hasStencil(format));
+    return (HasDepth(format) || HasStencil(format));
 }
 
 VulkanRenderPass::~VulkanRenderPass()
@@ -35,20 +36,19 @@ VulkanRenderPass::~VulkanRenderPass()
     if (renderpass != VK_NULL_HANDLE) {
         vkDestroyRenderPass(device->logicalDevice, renderpass, nullptr);
     }
+    device = nullptr;
 }
 
-void VulkanRenderPass::setRenderpassAttributes()
+void VulkanRenderPass::SetRenderpassAttributes()
 {
     // Collect attachment references
     bool hasDepth = false;
     bool hasColor = false;
     uint32_t attachmentIndex = 0;
     for (auto &attachment : renderpassCreateAttributes.attachmentDescriptions) {
-        if (isDepthStencil(attachment.format)) {
+        if (IsDepthStencil(attachment.format)) {
             // Only one depth attachment allowed
-            if (!hasDepth) {
-                std::cout << "Only one depth attachment is allowed! \n";
-            }
+            ASSERT(!hasDepth);
             renderpassCreateAttributes.depthReference.attachment = attachmentIndex;
             renderpassCreateAttributes.depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             hasDepth = true;
@@ -93,7 +93,7 @@ void VulkanRenderPass::setRenderpassAttributes()
     renderpassCreateAttributes.dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 }
 
-void VulkanRenderPass::setRenderpassCreateInfor()
+void VulkanRenderPass::SetRenderpassCreateInfor()
 {
     renderPassCreateInfo = vks::initializers::renderPassCreateInfo();
     renderPassCreateInfo.attachmentCount =
@@ -105,28 +105,28 @@ void VulkanRenderPass::setRenderpassCreateInfor()
     renderPassCreateInfo.pDependencies = renderpassCreateAttributes.dependencies.data();
 }
 
-void VulkanRenderPass::prepareRenderPass()
+void VulkanRenderPass::PrepareRenderPass()
 {
-    this->setRenderpassAttributes();
-    this->setRenderpassCreateInfor();
+    this->SetRenderpassAttributes();
+    this->SetRenderpassCreateInfor();
     prepare = true;
 }
 
-void VulkanRenderPass::createRenderPass()
+void VulkanRenderPass::CreateRenderPass()
 {
     if (prepare) {
         VK_CHECK_RESULT(vkCreateRenderPass(device->logicalDevice, &renderPassCreateInfo, nullptr, &renderpass));
     }
 }
 
-void VulkanRenderPass::addAttachmentDescriptions(VkFormat format, VkImageLayout finalLayout)
+void VulkanRenderPass::AddAttachmentDescriptions(VkFormat format, VkImageLayout finalLayout)
 {
     VkAttachmentDescription attachmentDescription{};
     attachmentDescription.format = format;
     attachmentDescription.samples = VK_SAMPLE_COUNT_1_BIT;
     attachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     attachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    if (isDepthStencil(format)) {
+    if (IsDepthStencil(format)) {
         attachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     } else {
         attachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;

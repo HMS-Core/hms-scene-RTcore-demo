@@ -6,12 +6,15 @@
 #include "VulkanTrianglePipeline.h"
 
 namespace vkpip {
-VulkanTrianglePipeline::~VulkanTrianglePipeline()
+VulkanTrianglePipeline::~VulkanTrianglePipeline() noexcept
 {
     uniformBuffers.params.destroy();
+    hitStorageBuffer->destroy();
+    indexBuffer->destroy();
+    vertexBuffer->destroy();
 }
 
-void VulkanTrianglePipeline::setupDescriptors()
+void VulkanTrianglePipeline::SetupDescriptors()
 {
     // Descriptor Pool
     std::vector<VkDescriptorPoolSize> poolSizes = {
@@ -54,7 +57,7 @@ void VulkanTrianglePipeline::setupDescriptors()
                            writeDescriptorSets.data(), 0, NULL);
 }
 
-void VulkanTrianglePipeline::setupUniformBuffers()
+void VulkanTrianglePipeline::SetupUniformBuffers()
 {
     uniformBuffers.params.destroy();
     // Shared parameter uniform buffer
@@ -66,12 +69,12 @@ void VulkanTrianglePipeline::setupUniformBuffers()
     VK_CHECK_RESULT(uniformBuffers.params.map());
 }
 
-void VulkanTrianglePipeline::updateParams(const buf::UBOParams *params)
+void VulkanTrianglePipeline::UpdateParams(const buf::UBOParams *params)
 {
     memcpy(uniformBuffers.params.mapped, params, sizeof(buf::UBOParams));
 }
 
-void VulkanTrianglePipeline::setupPipelines(const VkPipelineCache pipelineCache)
+void VulkanTrianglePipeline::SetupPipelines(const VkPipelineCache pipelineCache)
 {
     // Default empty vertex input
     pipelineCreateAttributes.rasterizationState.cullMode = VK_CULL_MODE_NONE;
@@ -82,9 +85,9 @@ void VulkanTrianglePipeline::setupPipelines(const VkPipelineCache pipelineCache)
         vkCreateGraphicsPipelines(device->logicalDevice, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline));
 }
 
-void VulkanTrianglePipeline::draw(VkCommandBuffer commandBuffer, PipelineDrawInfor *pipelineDrawInfor)
+void VulkanTrianglePipeline::Draw(VkCommandBuffer commandBuffer, PipelineDrawInfor *pipelineDrawInfor)
 {
-    // We must call preparePipelines first
+    // We must call PreparePipelines first
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0,
                             nullptr);

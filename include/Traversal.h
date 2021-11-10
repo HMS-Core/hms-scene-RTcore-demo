@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2019-2020. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2019-2021. All rights reserved.
  * Description: RayShop head file
  */
 
@@ -10,11 +10,10 @@
 * @file  Travsersal.h
 * @brief The building, intersection and other ops of rayshop.
 * @author   Huawei
-* @date     2020-8-11
-* @version  1.0
+* @date     2021-7-12
+* @version  2.0
 * @par Copyright (c):
 */
-
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -25,6 +24,7 @@
 
 namespace RayShop {
 using BLAS = uint32_t;
+constexpr int NUM_MAT = 4;
 
 /// @brief The flags used in tracing rays.
 enum TraceRayFlag {
@@ -101,8 +101,8 @@ struct HitDistancePrimitiveInstanceCoordinates {
 /// @brief Acceleration structure build method. Each method has cons and pros. Users
 /// should choose the appropriate one due to the use scenario.
 enum class ASBuildMethod {
-    SAH_CPU = 0,                        /* *< Best quality and slow building by cpu. */
-    SAH_GPU = 1,                        /* *< Best quality and slow building by gpu. */
+    SAH_CPU,                        /* *< Best quality and slow building by cpu. */
+    SAH_GPU,                        /* *< Best quality and slow building by gpu. */
 };
 
 /// @brief data source
@@ -118,24 +118,25 @@ struct Buffer {
     union {
         void *cpuBuffer;            /* *< Cpu buffer if type is CPU. */
         VkBuffer gpuVkBuffer;       /* *< VkBuffer if type is GPU on Vulkan. */
+        unsigned int *gpuGlBuffer;  /* *< GLuint if type is GPU on OpenGL. */
         void *other;                /* *< Other buffer type. */
     };
 };
 
 /// @brief The geometry description, typically a triangular mesh, w.r.t a bottom level acceleration structure.
 struct GeometryTriangleDescription {
-    Buffer vertice;                 /* *< The vertices buffer. */
+    Buffer vertices;                 /* *< The vertices buffer. */
     uint32_t stride;                /* *< The size of each vertex in 4 bytes, the first 3 floats must be position. */
-    uint32_t verticeCount;          /* *< The vertices count. */
+    uint32_t verticesCount;          /* *< The vertices count. */
 
-    Buffer indice;                  /**< The indices buffer. */
-    uint32_t indiceCount;           /**< The indices count. */
+    Buffer indices;                  /* *< The indices buffer. */
+    uint32_t indicesCount;           /* *< The indices count. */
 };
 
 /// @brief The instance description. An instance refers to a blas with an affine transformation.
 struct InstanceDescription {
-    float transform[4][4];          /* *< The 4x4 affine transform matrix, e.g., rotation, scaling and translation. */
-    BLAS blas;                      /* *< The referred blas. */
+    float transform[NUM_MAT][NUM_MAT]; /* *< The 4x4 affine transform matrix, e.g., rotation, scaling and translation. */
+    BLAS blas;                       /* *< The referred blas. */
 };
 
 /// @brief The error code.
@@ -144,6 +145,7 @@ enum class Result {
     NOT_READY,                      /* *< Vulkan device is not available. */
     INVALID_PARAMETER,              /* *< Invalid parameter. */
     OUT_OF_MEMORY,                  /* *< Not enough memory. */
+    SHADER_COMPILE_ERROR,           /* *< Shader compile error. */
     UNKNOWN_ERROR,                  /* *< Other unknown errors. */
 };
 
@@ -183,164 +185,226 @@ struct RaysMeshDescription {
     Size region;                    /* *< The ray generated region size */
 };
 
+namespace Vulkan {
 /// @brief The VkContext description.
-struct VkContext {
-    VkCommandBuffer cmdBuffer = VK_NULL_HANDLE;     /* *< vulkan command buffer created by user */
-    VkRenderPass renderpass = VK_NULL_HANDLE;       /* *< renderpass created by user */
-};
+    struct VkContext {
+        VkCommandBuffer cmdBuffer = VK_NULL_HANDLE;     /* *< vulkan command buffer created by user */
+        VkRenderPass renderpass = VK_NULL_HANDLE;       /* *< renderpass created by user */
+    };
 
-class TraversalImpl;
+/// @brief The ShaderStage enum.
+    enum class ShaderStage {
+        SHADER_STAGE_VERTEX_BIT = 0x00000001,
+        SHADER_STAGE_TESSELLATION_CONTROL_BIT = 0x00000002,
+        SHADER_STAGE_TESSELLATION_EVALUATION_BIT = 0x00000004,
+        SHADER_STAGE_GEOMETRY_BIT = 0x00000008,
+        SHADER_STAGE_FRAGMENT_BIT = 0x00000010,
+        SHADER_STAGE_COMPUTE_BIT = 0x00000020,
+        SHADER_STAGE_ALL_GRAPHICS = 0x0000001F,
+        SHADER_STAGE_ALL = 0x7FFFFFFF,
+    };
 
-class Traversal {
-public:
-    /**
-     * Default constructor.
-     */
-    explicit Traversal();
+/// @brief The ShaderModule description.
+    struct ShaderModule {
+        VkShaderModule vkHandle;    /* *< ShaderModule handle for vulkan */
+    };
 
-    /**
-     * Destructor.
-     */
-    ~Traversal();
+/// @brief The RayTracing ShaderModule createInfo description.
+    struct RayTracingShaderModuleCreateInfo {
+        const char *pName = nullptr;    /* *< shader name */
+        const char *pSource = nullptr;  /* *< shader text source */
+        ShaderStage stage = ShaderStage::SHADER_STAGE_ALL; /* *< shader stage bit */
+        TraceRayHitFormat hitFormat = TraceRayHitFormat::T_PRIMID_INSTID_U_V; /* *< hitInfo format */
+        const char **ppShaderIncludes = nullptr; /* *< inludes in shader source */
+        uint32_t shaderIncludesCnt = 0; /* *< the count of includes in shader source */
+        const char **ppShaderIncludeSources = nullptr; /* *< inlude sources for the inludes */
+    };
+
+    class TraversalImpl;
+
+    class Traversal {
+    public:
+        /**
+         * Default constructor.
+         */
+        explicit Traversal();
+
+        /**
+         * Destructor.
+         */
+        ~Traversal();
+
 #ifdef __ANDROID__
-    /**
-     * Initialize the traversal context and allocate some resources for internal use.
-     * @param[in]   physicalDevice          The Vulkan physical device.
-     * @param[in]   device                  The logical Vulkan device.
-     * @param[in]   computeQueue            The compute command queue that raytracing commands will be submitted to.
-     * @param[in]   computeIndice           The compute queue indice.
-     * @param[in]   env                     The pointer that encapsulates JNI methods.
-     * @return      Result                  Check out error code. @see Result
-     */
-    Result Setup(VkPhysicalDevice physicalDevice, VkDevice device, VkQueue computeQueue,
-                 uint32_t computeIndices, JNIEnv *env) const noexcept;
+        /**
+         * Initialize the traversal context and allocate some resources for internal use.
+         * @param[in]   physicalDevice          The Vulkan physical device.
+         * @param[in]   device                  The logical Vulkan device.
+         * @param[in]   computeQueue            The compute command queue that raytracing commands will be submitted to.
+         * @param[in]   computeIndice           The compute queue indices.
+         * @param[in]   env                     The pointer that encapsulates JNI methods.
+         * @return      Result                  Check out error code. @see Result
+         */
+        Result Setup(VkPhysicalDevice physicalDevice, VkDevice device, VkQueue computeQueue,
+                     uint32_t computeIndices, JNIEnv *env) const noexcept;
 #endif
-    /*
-     * Initialize the traversal context and allocate some resources for internal use.
-     * @param[in]   physicalDevice          The Vulkan physical device.
-     * @param[in]   device                  The logical Vulkan device.
-     * @param[in]   computeQueue            The compute command queue that raytracing commands will be submitted to.
-     * @param[in]   computeIndice           The compute queue indice.
-     * @return      Result                  Check out error code. @see Result
-     */
-    Result Setup(VkPhysicalDevice physicalDevice, VkDevice device, VkQueue computeQueue,
-                 uint32_t computeIndices) const noexcept;
 
-    /*
-     * Release internal resources.
-     */
-    void Destroy() const noexcept;
+        /*
+         * Initialize the traversal context and allocate some resources for internal use.
+         * @param[in]   physicalDevice          The Vulkan physical device.
+         * @param[in]   device                  The logical Vulkan device.
+         * @param[in]   computeQueue            The compute command queue that raytracing commands will be submitted to.
+         * @param[in]   computeIndice           The compute queue indices.
+         * @return      Result                  Check out error code. @see Result
+         */
+        Result Setup(VkPhysicalDevice physicalDevice, VkDevice device, VkQueue computeQueue,
+                     uint32_t computeIndices) const noexcept;
 
-    /**
-     * Create the bottom level acceleration structure.
-     * @param[in]   method                  The build method.
-     * @param[in]   geometriesCount         The number of geometries, e.g., the triangle mesh count.
-     * @param[in]   *geometries             An array of geometries.
-     * @param[out]  *blases                 An array of output bottom level acceleration structures,
-     *                                      each of which corresponds to a geometry object.
-     * @return      Result                  Check out error code. @see Result
-     * @note
-     */
-    Result CreateBLAS(ASBuildMethod                       method,
-                      uint32_t                            geometriesCount,
-                      const GeometryTriangleDescription   *geometries,
-                      BLAS                                *blases) const noexcept;
+        /*
+         * Release internal resources.
+         */
+        void Destroy() const noexcept;
 
-    /**
-     * Create the top level acceleration structure from a bunch of BLASes.
-     * @param[in]   instancesCount      The number of instances.
-     * @param[in]   *instances          An array of instance descriptions.
-     * @return      Result              Check out error code. @see Result
-     * @note
-     */
-    Result CreateTLAS(uint32_t                    instancesCount,
-                      const InstanceDescription   *instances) const noexcept;
+        /**
+         * Create the bottom level acceleration structure.
+         * @param[in]   method                  The build method.
+         * @param[in]   geometriesCount         The number of geometries, e.g., the triangle mesh count.
+         * @param[in]   *geometries             An array of geometries.
+         * @param[out]  *blases                 An array of output bottom level acceleration structures,
+         *                                      each of which corresponds to a geometry object.
+         * @return      Result                  Check out error code. @see Result
+         * @note
+         */
+        Result CreateBLAS(ASBuildMethod method,
+                          uint32_t geometriesCount,
+                          const GeometryTriangleDescription *geometries,
+                          BLAS *blases) const noexcept;
 
-    /**
-     * Refit the bottom level acceleration structure. It needs to be called when the geometry of
-     * the blas changes but users don't want to rebuild it entirely. Note that
-     * a refit AS' quality degrades. In every other a few frames, BLAS needs to be rebuilt anyway.
-     * @param[in]   geometriesCount         The number of geometries, e.g., triangular mesh count.
-     * @param[in]   *geometries             An array of geometries.
-     * @param[in]   *blases                 An array of bottom level acceleration structures,
-     *                                      each of which corresponds to a geometry object.
-     * @param[in]   cmdBuffer               vulkan command buffer created by user
-     * @return      Result                  Check out error code. @see Result
-     * @note
-     */
-    Result RefitBLAS(uint32_t                             geometriesCount,
-                     const GeometryTriangleDescription    *geometries,
-                     const BLAS                           *blases,
-                     VkCommandBuffer cmdBuffer = VK_NULL_HANDLE) const noexcept;
+        /**
+         * Create the top level acceleration structure from a bunch of BLASes.
+         * @param[in]   instancesCount      The number of instances.
+         * @param[in]   *instances          An array of instance descriptions.
+         * @return      Result              Check out error code. @see Result
+         * @note
+         */
+        Result CreateTLAS(uint32_t instancesCount,
+                          const InstanceDescription *instances) const noexcept;
 
-    /**
-     * Destroy the bottom level acceleration structure. We recommend users explicitly destroy blas
-     * when the blas is not in use anymore. An unreferenced blas will still occupy memory and drag
-     * down the system performance in some cases. All blases will be destroyed when the traversal
-     * object destroys itself anyhow.
-     * @param[in]   instancesCount      The number of instances.
-     * @param[in]   blas                Bottom level acceleration structure.
-     * @return      Result              Check out error code. @see Result
-     * @note
-     */
-    Result DestroyBLAS(uint32_t geometriesCount, const uint32_t *blas) const noexcept;
+        /**
+         * Refit the bottom level acceleration structure. It needs to be called when the geometry of
+         * the blas changes but users don't want to rebuild it entirely. Note that
+         * a refit AS' quality degrades. In every other a few frames, BLAS needs to be rebuilt anyway.
+         * @param[in]   geometriesCount         The number of geometries, e.g., triangular mesh count.
+         * @param[in]   *geometries             An array of geometries.
+         * @param[in]   *blases                 An array of bottom level acceleration structures,
+         *                                      each of which corresponds to a geometry object.
+         * @param[in]   cmdBuffer               vulkan command buffer created by user
+         * @return      Result                  Check out error code. @see Result
+         * @note
+         */
+        Result RefitBLAS(uint32_t geometriesCount,
+                         const GeometryTriangleDescription *geometries,
+                         const BLAS *blases,
+                         VkCommandBuffer cmdBuffer = VK_NULL_HANDLE) const noexcept;
 
-    /**
-     * Trace a given number of rays and return the hit results of each ray.
-     * @param[in]   rayCount            The ray number.
-     * @param[in]   rayFlags            The traversal flag, combination of any hit/closest hit,
-     *                                  backface culling/frontface culling
-     * @param[in]   rays                The ray buffer
-     * @param[in]   hits                The hit buffer, the buffer should allocate before call TraceRays(),
-     *                                  it's size should be rayCount * hitFormatStride
-     * @param[in]   hitFormat           The hit buffer format
-     * @return      Result              Check out error code. @see Result
-     * @see
-     * @note
-     */
-    Result TraceRays(uint32_t rayCount, uint32_t rayFlags, Buffer rays, Buffer hits,
-                     TraceRayHitFormat hitFormat, VkCommandBuffer cmdBuf = VK_NULL_HANDLE) const noexcept;
+        /**
+         * Destroy the bottom level acceleration structure. We recommend users explicitly destroy blas
+         * when the blas is not in use anymore. An unreferenced blas will still occupy memory and drag
+         * down the system performance in some cases. All blases will be destroyed when the traversal
+         * object destroys itself anyhow.
+         * @param[in]   instancesCount      The number of instances.
+         * @param[in]   blas                Bottom level acceleration structure.
+         * @return      Result              Check out error code. @see Result
+         * @note
+         */
+        Result DestroyBLAS(uint32_t geometriesCount, const uint32_t *blas) const noexcept;
 
-    /**
-    * Trace refected rays on gived reflective mesh on graphic pipeline
-    * @param[in]   rayMesh             The ray generated by mesh info, ray only suport TraceRayFlag
-    *                                  TRACERAY_FLAG_CLOSEST_HIT and TraceRayHitFormat PRIMID_INSTID
-    * @param[out]  hits                The hit buffer, the buffer should allocate before call TraceRays(),
-    *                                  it's size should be (the width of rayMesh region + 1) *
-    *                                  (the height of rayMesh region + 1) * hitFormatStride
-    * @param[in]   vkContext           The vulkan current context including command buffer handle for traceRay pipeline
-    *                                  and current active renderpass
-    * @return      Result              Check out error code. @see Result
-    * @see
-    * @note
-    */
-    Result TraceRays(const RaysMeshDescription &rayMesh,
-                     const std::vector<Buffer> &hits,
-                     VkContext vkContext) const noexcept;
+        /**
+         * Get the DescBufferInfos created by RayShop.
+         * @param[out]  *bvhTree       bvhTree VkDescriptorBufferInfo.
+         * @param[out]  *triangles     triangles VkDescriptorBufferInfo.
+         * @param[out]  *tlasInfo      top-level info VkDescriptorBufferInfo.
+         * @param[out]  *uniforms      uniforms VkDescriptorBufferInfo.
+         * @return      Result         Check out error code. @see Result
+         * @note
+         */
+        Result GetTraversalDescBufferInfos(
+                VkDescriptorBufferInfo *bvhTree,
+                VkDescriptorBufferInfo *triangles,
+                VkDescriptorBufferInfo *tlasInfo,
+                VkDescriptorBufferInfo *uniforms) noexcept;
 
-    /**
-     * The get the size in bytes of a hit buffer record.
-     * @param[in]   hitFormat           A specific hit buffer format, @see TraceRayHitFormat.
-     * @return      uint32_t            The hit format record size.
-     * @note
-     */
-    static uint32_t GetHitFormatBytes(TraceRayHitFormat hitFormat) noexcept;
+        /**
+         * Get the RayTracing fragment shader created by RayShop.
+         * @param[in]   *createInfo    RayTracingShaderModuleCreateInfo to create RayTracing ShaderModule.
+         * @param[out]  *shaderModule  RayTracing ShaderModule created by RayShop.
+         * @return      Result         Check out error code. @see Result
+         * @note
+         */
+        Result CreateRayTracingShaderModule(
+                const RayTracingShaderModuleCreateInfo *createInfo,
+                ShaderModule *shaderModule) const noexcept;
 
-    /**
-     * Get text explanation of an error code.
-     * @param[in]   err                 The error code, @see Result.
-     * @return      const char *        The text value of an error code.
-     */
-    static const char *GetErrorCodeString(Result err) noexcept;
+        /**
+         * Trace a given number of rays and return the hit results of each ray.
+         * @param[in]   rayCount            The ray number.
+         * @param[in]   rayFlags            The traversal flag, combination of any hit/closest hit,
+         *                                  backface culling/frontface culling
+         * @param[in]   rays                The ray buffer
+         * @param[in]   hits                The hit buffer, the buffer should allocate before call TraceRays(),
+         *                                  it's size should be rayCount * hitFormatStride
+         * @param[in]   hitFormat           The hit buffer format
+         * @return      Result              Check out error code. @see Result
+         * @see
+         * @note
+         */
+        Result TraceRays(uint32_t rayCount, uint32_t rayFlags, const Buffer rays, Buffer hits,
+                         TraceRayHitFormat hitFormat, VkCommandBuffer cmdBuf = VK_NULL_HANDLE) const noexcept;
 
-    Traversal(const Traversal&) = delete;
-    Traversal& operator=(const Traversal&) = delete;
-    Traversal(Traversal&&) = delete;
-    Traversal& operator=(Traversal&&) = delete;
+        /**
+        * Trace refected rays on gived reflective mesh on graphic pipeline
+        * @param[in]   rayMesh             The ray generated by mesh info, ray only suport TraceRayFlag
+        *                                  TRACERAY_FLAG_CLOSEST_HIT and TraceRayHitFormat PRIMID_INSTID
+        * @param[out]  hits                The hit buffer, the buffer should allocate before call TraceRays(),
+        *                                  it's size should be (the width of rayMesh region + 1) *
+        *                                  (the height of rayMesh region + 1) * hitFormatStride
+        * @param[in]   vkContext           The vulkan current context including command buffer handle for traceRay pipeline
+        *                                  and current active renderpass
+        * @return      Result              Check out error code. @see Result
+        * @see
+        * @note
+        */
+        Result TraceRays(const RaysMeshDescription &rayMesh,
+                         const std::vector<Buffer> &hits,
+                         VkContext vkContext) const noexcept;
 
-private:
-    std::unique_ptr<TraversalImpl> m_impl;
-};
-}; // namespace RayShop
+        /**
+         * The get the size in bytes of a hit buffer record.
+         * @param[in]   hitFormat           A specific hit buffer format, @see TraceRayHitFormat.
+         * @return      uint32_t            The hit format record size.
+         * @note
+         */
+        static uint32_t GetHitFormatBytes(TraceRayHitFormat hitFormat) noexcept;
+
+        /**
+         * Get text explanation of an error code.
+         * @param[in]   err                 The error code, @see Result.
+         * @return      const char *        The text value of an error code.
+         */
+        static const char *GetErrorCodeString(Result err) noexcept;
+
+        Traversal(const Traversal &) = delete;
+
+        Traversal &operator=(const Traversal &) = delete;
+
+        Traversal(Traversal &&) = delete;
+
+        Traversal &operator=(Traversal &&) = delete;
+
+    private:
+        std::unique_ptr<TraversalImpl> m_impl;
+    };
+}   // namespace Vulkan
+}   // namespace RayShop
 
 #endif // TRAVERSAL_H
+

@@ -6,7 +6,7 @@
 #include "VulkanIBLPipelines.h"
 
 namespace vkpip {
-void VulkanRenderCubePipeline::setupDescriptors()
+void VulkanRenderCubePipeline::SetupDescriptors()
 {
     std::vector<VkDescriptorPoolSize> poolSizes = {
         vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
@@ -33,17 +33,17 @@ void VulkanRenderCubePipeline::setupDescriptors()
                            writeDescriptorSets.data(), 0, NULL);
 }
 
-void VulkanRenderCubePipeline::setupPipelines(const VkPipelineCache pipelineCache)
+void VulkanRenderCubePipeline::SetupPipelines(const VkPipelineCache pipelineCache)
 {
     // depth write and test off
-    pipelineCreateAttributes.vertexInputState = *vkvert::Vertex::getPipelineVertexInputState(
+    pipelineCreateAttributes.vertexInputState = *vkvert::Vertex::GetPipelineVertexInputState(
         {vkvert::VertexComponent::Position, vkvert::VertexComponent::Normal, vkvert::VertexComponent::UV});
     pipelineCreateAttributes.rasterizationState.cullMode = VK_CULL_MODE_NONE;
     VK_CHECK_RESULT(
         vkCreateGraphicsPipelines(device->logicalDevice, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline));
 }
 
-void VulkanGenBRDFFlutPipeline::setupDescriptors()
+void VulkanGenBRDFFlutPipeline::SetupDescriptors()
 {
     // Descriptor Pool
     std::vector<VkDescriptorPoolSize> poolSizes = {
@@ -62,7 +62,7 @@ void VulkanGenBRDFFlutPipeline::setupDescriptors()
     VK_CHECK_RESULT(vkAllocateDescriptorSets(device->logicalDevice, &allocInfo, &descriptorSet));
 }
 
-void VulkanGenBRDFFlutPipeline::setupPipelines(const VkPipelineCache pipelineCache)
+void VulkanGenBRDFFlutPipeline::SetupPipelines(const VkPipelineCache pipelineCache)
 {
     // empty input, depth write and test off
     pipelineCreateAttributes.rasterizationState.cullMode = VK_CULL_MODE_NONE;

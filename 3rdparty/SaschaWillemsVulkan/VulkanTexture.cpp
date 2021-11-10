@@ -73,7 +73,7 @@ namespace vks
         samplerCreateInfors.prepare = true;
     }
 
-    void Texture::createTexture(VulkanDevice *device, VkImageLayout finalLayout, bool createSampler)
+    void Texture::createTexture(VulkanDevice *device, VkImageLayout finalLayout, bool createSampler, VkQueue queue)
     {
         assert(imageCreateInfors.prepare);
         assert(imageViewCreateInfors.prepare);
@@ -96,6 +96,14 @@ namespace vks
         imageViewCreateInfors.imageViewCreateInfo.image = image;
         VK_CHECK_RESULT(
                 vkCreateImageView(device->logicalDevice, &imageViewCreateInfors.imageViewCreateInfo, nullptr, &view));
+        if (queue) {
+            // Use a separate command buffer for texture laytout setting
+            VkCommandBuffer setCmd = device->createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+            // Setup image memory barrier
+            vks::tools::setImageLayout(setCmd, image, VK_IMAGE_ASPECT_COLOR_BIT,
+                VK_IMAGE_LAYOUT_UNDEFINED, imageLayout);
+            device->flushCommandBuffer(setCmd, queue);
+        }
 
         if (createSampler) {
             VK_CHECK_RESULT(

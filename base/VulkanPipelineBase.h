@@ -25,7 +25,9 @@ enum RenderPipelineType {
     REFLECTION_BLEND_PIPELINE,
     DEPTH_ONLY_PIPELINE,
     GENERATE_RAY_PIPELINE,
-    REFLECT_RENDER_PIPELINE
+    REFLECT_RENDER_PIPELINE,
+    GBUFFER_RENDER_PIPELINE,
+    DEFERRED_PBR_PIPELINE
 };
 
 struct ExtraPipelineResources {
@@ -50,6 +52,14 @@ struct PipelineDrawInfor {
     vks::Buffer *indexBuffer = nullptr;
 };
 
+struct PipelineShaderCreateInfor {
+    std::string vertShaderName = "";
+    std::string fragShaderName = "";
+    VkPipelineShaderStageCreateInfo vertShader = {};
+    VkPipelineShaderStageCreateInfo fragShader = {};
+    bool CheckParams();
+};
+
 class VulkanPipelineBase {
 public:
     VkPipeline pipeline = VK_NULL_HANDLE;
@@ -57,26 +67,28 @@ public:
     VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
 
     VulkanPipelineBase(vks::VulkanDevice *vulkanDevice, const ExtraPipelineResources *resources,
-                       const std::string vertShaderName, const std::string fragShaderName = "")
-        : device(vulkanDevice), vertShaderName(vertShaderName), fragShaderName(fragShaderName){};
-    virtual ~VulkanPipelineBase();
+                       const PipelineShaderCreateInfor &pipelineShaderCreateInfor)
+        : device(vulkanDevice), pipelineShaderCreateInfor(pipelineShaderCreateInfor){};
 
-    virtual void draw(VkCommandBuffer commandBuffer, vkglTF::Model *scene){};
-    virtual void draw(VkCommandBuffer commandBuffer, PipelineDrawInfor *pipelineDrawInfor){};
+    virtual ~VulkanPipelineBase() noexcept;
 
-    virtual void preparePipelines(const VkRenderPass renderPass, const VkPipelineCache pipelineCache,
-                                  const std::vector<VkDescriptorSetLayout> *setLayouts = nullptr,
-                                  const std::vector<VkPushConstantRange> *pushConstantRanges = nullptr);
-    virtual void updateMatrices(const buf::UBOMatrices *uboMatrices){};
-    virtual void updateParams(const buf::UBOParams *uboParams){};
-    virtual void updateStorageBuffers(VkQueue transferQueue = VK_NULL_HANDLE){};
+    virtual void Draw(VkCommandBuffer commandBuffer, vkglTF::Model *scene){};
+    virtual void Draw(VkCommandBuffer commandBuffer, PipelineDrawInfor *pipelineDrawInfor){};
+
+    virtual void PreparePipelines(const VkRenderPass renderPass, const VkPipelineCache pipelineCache,
+                                  const std::vector<VkDescriptorSetLayout> *setLayouts,
+                                  const std::vector<VkPushConstantRange> *pushConstantRanges,
+                                  const uint32_t subpass);
+    virtual void UpdateMatrices(const buf::UBOMatrices *uboMatrices){};
+    virtual void UpdateParams(const buf::UBOParams *uboParams){};
+    virtual void UpdateStorageBuffers(VkQueue transferQueue){};
 
 protected:
     vks::VulkanDevice *device = nullptr;
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
     VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
     // information of pipeline creation
-    VkGraphicsPipelineCreateInfo pipelineCreateInfo;
+    VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
     struct PipelineCreateAttribute {
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyState;
         VkPipelineRasterizationStateCreateInfo rasterizationState;
@@ -90,18 +102,18 @@ protected:
         VkPipelineVertexInputStateCreateInfo vertexInputState{};
         std::vector<VkPipelineShaderStageCreateInfo> shaders;
     } pipelineCreateAttributes;
+    PipelineShaderCreateInfor pipelineShaderCreateInfor;
+    virtual void SetupDescriptors(){};
+    virtual void SetupPipelinelayout(const std::vector<VkDescriptorSetLayout> *setLayouts,
+                                     const std::vector<VkPushConstantRange> *pushConstantRanges);
+    virtual void SetupUniformBuffers(){};
+    virtual void SetupStorageBuffers(){};
+    virtual void SetupTextures(){};
+    virtual void SetupPipelines(const VkPipelineCache pipelineCache) = 0;
+    virtual void SetPipelineCreateInfor(const VkRenderPass renderPass, const uint32_t subpass);
 
-    std::string vertShaderName;
-    std::string fragShaderName;
-
-    virtual void setupDescriptors() = 0;
-    virtual void setupPipelinelayout(const std::vector<VkDescriptorSetLayout> *setLayouts = nullptr,
-                                     const std::vector<VkPushConstantRange> *pushConstantRanges = nullptr);
-    virtual void setupUniformBuffers(){};
-    virtual void setupStorageBuffers(){};
-    virtual void setupTextures(){};
-    virtual void setupPipelines(const VkPipelineCache pipelineCache){};
-    virtual void setPipelineCreateInfor(const VkRenderPass renderPass);
+private:
+    void SetupShaderCreateInfors();
 };
 } // namespace vkpip
 

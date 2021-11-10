@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="de.saschawillems.triangle">
+    package="com.huawei.rtcore.triangle">
 
     <application
         android:label="RayShop Triangle"
         android:icon="@drawable/icon"
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
-        <activity android:name="de.saschawillems.vulkanSample.VulkanActivity"
+        <activity android:name="com.huawei.rtcore.vktriangle.VulkanActivity"
             android:screenOrientation="landscape"
             android:configChanges="orientation|keyboardHidden">
             <meta-data android:name="android.app.lib_name"

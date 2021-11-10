@@ -40,6 +40,9 @@ struct UBOParams {
     float scaleIBLAmbient = 1.0f;
     float debugViewInputs = 0;
     float debugViewEquation = 0;
+    int frame = 0;
+    int aoSamples = 1;
+    float aoRadius = 2.0f;
 };
 
 struct PushConstBlockMaterial {

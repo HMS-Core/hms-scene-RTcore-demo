@@ -31,9 +31,9 @@ public:
     VulkanShader() = default;
     virtual ~VulkanShader() = default;
     /** @brief Loads a SPIR-V shader file for the given shader stage */
-    VkPipelineShaderStageCreateInfo loadShader(vks::VulkanDevice *device, std::string fileName,
+    VkPipelineShaderStageCreateInfo LoadShader(vks::VulkanDevice *device, std::string fileName,
                                                VkShaderStageFlagBits stage);
-    std::string getShadersPath() const;
+    std::string GetShadersPath() const;
 private:
     // List of shader modules created (stored for cleanup)
     std::vector<VkShaderModule> shaderModules;
@@ -42,12 +42,12 @@ private:
 
 class LoadShaders {
 public:
-    static VkPipelineShaderStageCreateInfo loadShader(vks::VulkanDevice *device, std::string fileName,
+    static VkPipelineShaderStageCreateInfo LoadShader(vks::VulkanDevice *device, std::string fileName,
                                                       VkShaderStageFlagBits stage)
     {
-        return VulkanShader::Instance().loadShader(device, fileName, stage);
+        return VulkanShader::Instance().LoadShader(device, fileName, stage);
     }
-    static void destroy(vks::VulkanDevice *device)
+    static void Destroy(vks::VulkanDevice *device)
     {
         return VulkanShader::Instance().destroy(device);
     }

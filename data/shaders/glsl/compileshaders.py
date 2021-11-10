@@ -1,49 +1,35 @@
-import argparse
-import fileinput
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Copyright Huawei Technologies Co., Ltd. 2020-2021. All rights reserved.
+# scripts for comple shaders.
+import sys
 import os
 import subprocess
-import sys
 
-parser = argparse.ArgumentParser(description='Compile all GLSL shaders')
-parser.add_argument('--glslang', type=str, help='path to glslangvalidator executable')
-parser.add_argument('--g', action='store_true', help='compile with debug symbols')
-args = parser.parse_args()
+if len(sys.argv) < 2:
+	sys.exit("Please provide a target directory")
 
-def findGlslang():
-    def isExe(path):
-        return os.path.isfile(path) and os.access(path, os.X_OK)
+if not os.path.exists(sys.argv[1]):
+	sys.exit("%s is not a valid directory" % sys.argv[1])
 
-    if args.glslang != None and isExe(args.glslang):
-        return args.glslang
+path = sys.argv[1]
 
-    exe_name = "glslangvalidator"
-    if os.name == "nt":
-        exe_name += ".exe"
+# compile shaders to spv, shaders start with 'raytracing_' will compile online with shaderc.
+exts = ('vert', 'frag', 'comp', 'geom', 'tesc', 'tese')
+shaderfiles = [os.path.join(path, file) for file in os.listdir(path)
+			   if file.split('.')[-1] in exts and 'raytracing_' not	in file]
 
-    for exe_dir in os.environ["PATH"].split(os.pathsep):
-        full_path = os.path.join(exe_dir, exe_name)
-        if isExe(full_path):
-            return full_path
+failedshaders = []
+for shaderfile in shaderfiles:
+	# print("\n-------- %s --------\n" % shaderfile)
+	if subprocess.call("glslc %s -o %s.spv" % (shaderfile, shaderfile), shell=True) != 0:
+		failedshaders.append(shaderfile)
 
-    sys.exit("Could not find DXC executable on PATH, and was not specified with --dxc")
+print("-------- Compilation result --------")
 
-glslang_path = findGlslang()
-dir_path = os.path.dirname(os.path.realpath(__file__))
-dir_path = dir_path.replace('\\', '/')
-for root, dirs, files in os.walk(dir_path):
-    for file in files:
-        if file.endswith(".vert") or file.endswith(".frag") or file.endswith(".comp") or file.endswith(".geom") or file.endswith(".tesc") or file.endswith(".tese") or file.endswith(".rgen") or file.endswith(".rchit") or file.endswith(".rmiss"):
-            input_file = os.path.join(root, file)
-            output_file = input_file + ".spv"
-
-            add_params = ""
-            if args.g:
-                add_params = "-g"
-
-            if file.endswith(".rgen") or file.endswith(".rchit") or file.endswith(".rmiss"):
-               add_params = add_params + " --target-env vulkan1.2"
-
-            res = subprocess.call("%s -V %s -o %s %s" % (glslang_path, input_file, output_file, add_params), shell=True)
-            # res = subprocess.call([glslang_path, '-V', input_file, '-o', output_file, add_params], shell=True)
-            if res != 0:
-                sys.exit()
+if len(failedshaders) == 0:
+	print("SUCCESS: All shaders compiled to SPIR-V\n")
+else:
+	print("ERROR: %d shader(s) could not be compiled:\n" % len(failedshaders))
+	for failedshader in failedshaders:
+		print("\t" + failedshader)

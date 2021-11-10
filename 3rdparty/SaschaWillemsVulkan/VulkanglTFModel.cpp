@@ -15,6 +15,9 @@
 #endif
 
 #include "VulkanglTFModel.h"
+#include "base/binding.glsl"
+
+#include "RTATrace.h"
 
 VkDescriptorSetLayout vkglTF::descriptorSetLayoutImage = VK_NULL_HANDLE;
 VkDescriptorSetLayout vkglTF::descriptorSetLayoutUbo = VK_NULL_HANDLE;
@@ -335,7 +338,11 @@ void vkglTF::Model::loadNode(vkglTF::Node *parent, const tinygltf::Node &node, u
                                 vert.color = glm::make_vec4(&bufferColors[v * 4]);
                         }
                     } else {
-                        vert.color = glm::vec4(1.0f);
+                        if (node.mesh < materials.size()) {
+                            vert.color = glm::vec4(1.0f) * materials[node.mesh].baseColorFactor;
+                        } else {
+                            vert.color = glm::vec4(1.0f);
+                        }
                     }
                     vert.tangent = bufferTangents ? glm::vec4(glm::make_vec4(&bufferTangents[v * 4])) : glm::vec4(0.0f);
                     vert.joint0 = hasSkin ? glm::vec4(glm::make_vec4(&bufferJoints[v * 4])) : glm::vec4(0.0f);
@@ -687,12 +694,13 @@ void vkglTF::Model::loadAnimations(tinygltf::Model &gltfModel)
 void vkglTF::Model::convertLocalVertexToWorld(const glm::mat4 modelMatrix,
                                               std::vector<vkvert::Vertex> &outWorldVertices)
 {
+    ATRACE_CALL();
     if (outWorldVertices.size() != vertexBuffer.size()) {
         outWorldVertices.clear();
         outWorldVertices.resize(vertexBuffer.size());
     }
     for (Node *node : linearNodes) {
-        if (node->mesh) {
+        if (node->mesh && node->updated) {
             const glm::mat4 localMatrix = node->getMatrix();
             for (Primitive *primitive : node->mesh->primitives) {
                 for (uint32_t i = 0; i < primitive->vertexCount; i++) {
@@ -702,16 +710,10 @@ void vkglTF::Model::convertLocalVertexToWorld(const glm::mat4 modelMatrix,
                     vertex.pos = modelMatrix * localMatrix * glm::vec4(glm::vec3(vertex.pos), 1.0f);
                     // Flip Y-Axis of vertex positions
                     vertex.pos.y *= -1.0f;
-                    vertex.pos = glm::vec4(vertex.pos.x / vertex.pos.w, vertex.pos.y / vertex.pos.w,
-                                           vertex.pos.z / vertex.pos.w, 1.f);
-                    vertex.normal =
-                        glm::vec4(glm::normalize(glm::transpose(glm::inverse(glm::mat3(modelMatrix * localMatrix))) *
-                                                 glm::normalize(glm::vec3(vertex.normal))),
-                                  0.0);
-
                     outWorldVertices[primitive->firstVertex + i] = vertex;
                 }
             }
+            node->updated = false;
         }
     }
 }
@@ -733,28 +735,25 @@ void vkglTF::Model::prepareVulkanModel(vks::VulkanDevice *device, VkQueue transf
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vertexIndexBufers.indices, indexBufferSize, (void *)indexBuffer.data());
 
     // Setup descriptors
-    uint32_t meshCount{0};
-    uint32_t imageCount{0};
-    uint32_t materialCount{0};
     for (auto node : linearNodes) {
         if (node->mesh) {
-            meshCount++;
+            nodeCount++;
         }
     }
     for (auto material : materials) {
         // every material contains 5 texture for pbr rendering
-        imageCount += 5;
         materialCount++;
     }
-    std::vector<VkDescriptorPoolSize> poolSizes = {{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, meshCount},
-                                                   {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageCount}};
+    std::vector<VkDescriptorPoolSize> poolSizes = {
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, nodeCount},
+        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, materialCount * materialTextureCount}};
 
     VkDescriptorPoolCreateInfo descriptorPoolCI{};
     descriptorPoolCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     descriptorPoolCI.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     descriptorPoolCI.pPoolSizes = poolSizes.data();
     // 1: indices and vertices descriptorset
-    descriptorPoolCI.maxSets = meshCount + materialCount + 1;
+    descriptorPoolCI.maxSets = nodeCount + materialCount + 1;
     VK_CHECK_RESULT(vkCreateDescriptorPool(device->logicalDevice, &descriptorPoolCI, nullptr, &descriptorPool));
 
     // Descriptors for per-node uniform buffers
@@ -798,6 +797,21 @@ void vkglTF::Model::prepareVulkanModel(vks::VulkanDevice *device, VkQueue transf
         for (auto &material : materials) {
             material.createDescriptorSet(descriptorPool, vkglTF::descriptorSetLayoutImage, descriptorBindingFlags,
                                          emptyTexture);
+        }
+    }
+    // collect descriptor for texutres and node buffers
+    textureDescriptors.clear();
+    nodeBufferDescriptors.clear();
+    for (auto &texture : textures) {
+        textureDescriptors.push_back(texture.descriptor);
+    }
+    assert(textureDescriptors.size() <= MAX_TEXTURE_NUM);
+    for (uint32_t i = textureDescriptors.size(); i < MAX_TEXTURE_NUM; i++) {
+        textureDescriptors.push_back(emptyTexture.descriptor);
+    }
+    for (auto &node : linearNodes) {
+        if (node->mesh) {
+            nodeBufferDescriptors.push_back(node->mesh->uniformBuffer.descriptor);
         }
     }
 }
@@ -912,7 +926,7 @@ void vkglTF::Model::collectRelectionInformations(Node *node)
                 sceneMaterialIds.push_back(std::make_pair(&primitive->material, nodeId));
             }
 
-            if (drawMeshNames.find(node->name) != drawMeshNames.end()) {
+            if (drawMeshNames.find(node->mesh->name) != drawMeshNames.end()) {
                 reflectionPrimitiveIds.push_back(std::make_tuple(primitive, &node->mesh->uniformBuffer, nodeId));
             }
         }
@@ -1102,6 +1116,7 @@ void vkglTF::Model::getSceneDimensions()
 
 void vkglTF::Model::updateAnimation(uint32_t index, float time)
 {
+    ATRACE_CALL();
     if (index > static_cast<uint32_t>(animations.size()) - 1) {
         std::cout << "No animation with index " << index << std::endl;
         return;
@@ -1146,6 +1161,7 @@ void vkglTF::Model::updateAnimation(uint32_t index, float time)
                         }
                     }
                     updated = true;
+                    channel.node->updated = true;
                 }
             }
         }

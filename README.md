@@ -1,26 +1,44 @@
 # Sample Codes for RTCore
-[中文](https://github.com/HMS-Core/hms-scene-RTcore-demo/blob/master/README_zh.md) | English
+[中文](README_ZH.md) | English
+
 ## Contents
 
-* [Introduction](#introduction)
-* [Compilation](#compilation)
-* [Demos](#demos)
-* [Reference_Projects](#reference_projects)
-* [License](#license)
+* [Introduction](#Introduction)
+* [Compilation](#Compilation)
+* [Demos](#Demos)
+* [Reference_Projects](#Reference_Projects)
+* [License](#License)
 
 ## Introduction
 This project mainly demonstrates how to use RTCore APIs to build hybrid rendering pipelines and simulate partial reflection in ray tracing. It provides two demos: one for drawing a triangle using RTCore APIs, and the other for implementing physically based rendering (PBR) pipelines and simulating partial reflection based on hybrid rendering.
 In this project, we make use of Vulkan by referring to SaschaWillems' VulkanExample[[1]](https://github.com/SaschaWillems/Vulkan) project. In the demo of drawing a triangle, the primary ray for each pixel on the screen is calculated by referring to Ray Tracing in One Weekend[[3]](https://raytracing.github.io/books/RayTracingInOneWeekend.html). PBR-related functions are implemented by referring to LearnOpenGL[[2]](https://learnopengl-cn.github.io/07%20PBR/02%20Lighting/#pbr).
 
 ## Compilation
-The two demos have been tested on Android platforms and contain all necessary configuration files.
-**Android platform**
+The two demos have been tested on Android / Harmony OSplatforms and contain all necessary configuration files.
+**Android / Harmony OS platform**
 1\. Development Environment
 * Android studio 4.0 or later
-* ndk 21.0.6113669 or later
-* Android SDK 31.0.0 or later
+* ndk 20.1.5948944 or later
+* Android SDK 29.0.0 or later
 
-2\. Open `VulkanRTCoreExample\android` in Android Studio and synchronize the project. Run the project to generate the APK and install it on a Huawei phone. Then launch the app to check whether it works as expected.
+2\. Compile and Run
+
+2.1 using IDE
+
+Open `android` in Android Studio and synchronize the project. Run the project to generate the APK and install it on a phone. Then launch the app to check whether it works as expected.
+
+2.2 using command line
+
+adb connect with mobile phone and run following.
+
+```bat
+cd android
+call .\gradlew clean
+call .\gradlew installDebug 	# or `call .\gradlew assembleDebug` for just build apk
+adb shell am start -n "com.huawei.rtcore.vkhybridrt/.VulkanActivity"
+```
+
+
 
 ## Demos
 ### [Drawing a Triangle using Ray Tracing](examples/triangle)
@@ -51,20 +69,17 @@ This demo builds a set of ray tracing-based hybrid rendering pipelines to implem
 * `examples/hybridreflection/VulkanImageBasedLighting`
 * `examples/hybridreflection/VulkanSkyboxPipeline`;
 
-2\. Rasterize reflective objects through graphics pipelines, and use the vertex WCS coordinates, normal vectors, and camera coordinates to get specular reflection rays.
-* `examples/hybridreflection/VulkanGenReflecRayPipeline`
+2\. Add a raytraing pipeline to generate reflection texture  which builds of resources that RTCore needs. Then generate gays, intersect with scene objects, get color and return a reflection texture in shader codes.
 
-3\. Similar to the demo for drawing a triangle, use RTCore to build an acceleration structure for a scene and calculate the ray intersections. Here, rays generated using graphics pipelines are available in the GPU.
-4\. Traverse material information of all possible reflective objects in the scene based on the intersection calculation result, and color the intersections through PBR to obtain specular maps.
-* `examples/hybridreflection/VulkanReflectionPipeline`
+* `examples/hybridreRayTracing/RayTracingPass`
+* `data/shaders/glsl/hybridRayTracing/raytracing_color.frag`
 
-5\. Use a hybrid pipeline to fuse specular maps and images displayed by original graphics pipelines.
-* `examples/hybridreflection/VulkanOnscreenPipeline`
+3\. Use a hybrid pipeline to fuse specular maps and images displayed by original graphics pipelines.
+
+* `examples/hybridreRayTracing/VulkanOnscreenPipeline`
 
 Below is an example of partial reflection:
-
 <img src="images/hybridreflection.png" width="500px">
-Remarks: The GLTF materials provided by Huawei contain six objects to be reflected: "Huawei", "Cone", "Sphere", "Capsule", "Cube", "Plane". You can use the `setDrawMeshName` function in `hybridreflection.cpp` to select the objects that require reflection.
 
 ## Reference_Projects
 [1] https://github.com/SaschaWillems/Vulkan

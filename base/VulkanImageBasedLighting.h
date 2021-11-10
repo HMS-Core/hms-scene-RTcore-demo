@@ -32,11 +32,11 @@ public:
     float prefilteredCubeMipLevels = 0;
     VulkanImageBasedLighting(vks::VulkanDevice *device, vkglTF::Model *skybox, vks::TextureCubeMap *environmentCube)
         : device(device), skybox(skybox), environmentCube(environmentCube){};
-    ~VulkanImageBasedLighting();
+    ~VulkanImageBasedLighting() noexcept;
 
-    void generateIBLTextures(VkPipelineCache pipelineCache, VkQueue queue);
+    void GenerateIBLTextures(VkPipelineCache pipelineCache, VkQueue queue);
 
-    void bindDescriptorSet(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, uint32_t bindImageSet);
+    void BindDescriptorSet(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, uint32_t bindImageSet);
 
 private:
     struct Textures {
@@ -46,25 +46,25 @@ private:
         vks::TextureCubeMap prefilteredCube;
     } textures;
     IBLConfig configs;
-    VkDescriptorPool descriptorPool;
+    VkDescriptorPool descriptorPool{};
     // descriptor set for 0: lutBrdf, 1: irradianceCube, 2：prefilteredCube
-    VkDescriptorSet descriptorSet;
+    VkDescriptorSet descriptorSet{};
 
     // Generate a BRDF integration map used as a look-up-table (stores roughness / NdotV)
-    void generateBRDFLUT(VkPipelineCache pipelineCache, VkQueue queue);
+    void GenerateBRDFLUT(VkPipelineCache pipelineCache, VkQueue queue);
     // Generate an irradiance cube map from the environment cube map
-    void generateIrradianceCube(VkPipelineCache pipelineCache, VkQueue queue);
+    void GenerateIrradianceCube(VkPipelineCache pipelineCache, VkQueue queue);
     // Prefilter environment cubemap
     // See https://placeholderart.wordpress.com
     // /2015/07/28/implementation-notes-runtime-environment-map-filtering-for-image-based-lighting/
-    void generatePrefilteredCube(VkPipelineCache pipelineCache, VkQueue queue);
+    void GeneratePrefilteredCube(VkPipelineCache pipelineCache, VkQueue queue);
     // Alloc Descriptorpool,
     // setup descriptor layout for
     // 0: samplerIrradiance
     // 1: prefilteredMap
     // 2: samplerBRDFLUT
     // setup the  Descriptorset
-    void setupDescriptors();
+    void SetupDescriptors();
 };
 } // namespace vkibl
 

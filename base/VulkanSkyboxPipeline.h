@@ -16,23 +16,19 @@ namespace vkpip {
 class VulkanSkyboxPipeline : public VulkanPipelineBase {
 public:
     VulkanSkyboxPipeline(vks::VulkanDevice *vulkanDevice, const ExtraPipelineResources *resources,
-                         const std::string vertShaderName = "hybridreflection/skybox.vert.spv",
-                         const std::string fragShaderName = "hybridreflection/skybox.frag.spv")
-        : VulkanPipelineBase(vulkanDevice, resources, vertShaderName, fragShaderName),
+                         const PipelineShaderCreateInfor &pipelineShaderCreateInfor)
+        : VulkanPipelineBase(vulkanDevice, resources, pipelineShaderCreateInfor),
           environmentCube(resources->textureCubeMap){};
-    virtual ~VulkanSkyboxPipeline();
-    virtual void draw(VkCommandBuffer commandBuffer, vkglTF::Model *skybox) override;
-    virtual void preparePipelines(const VkRenderPass renderPass, const VkPipelineCache pipelineCache,
-                                  const std::vector<VkDescriptorSetLayout> *setLayouts = nullptr,
-                                  const std::vector<VkPushConstantRange> *pushConstantRanges = nullptr) override;
-    virtual void updateMatrices(const buf::UBOMatrices *uboMatrices) override;
-    virtual void updateParams(const buf::UBOParams *params) override;
+    ~VulkanSkyboxPipeline() noexcept override;
+    void Draw(VkCommandBuffer commandBuffer, vkglTF::Model *skybox) override;
+    void UpdateMatrices(const buf::UBOMatrices *uboMatrices) override;
+    void UpdateParams(const buf::UBOParams *params) override;
 
 protected:
-    virtual void setupDescriptors() override;
-    virtual void setupPipelines(const VkPipelineCache pipelineCache) override;
+    void SetupDescriptors() override;
+    void SetupPipelines(const VkPipelineCache pipelineCache) override;
     // Prepare and initialize uniform buffer containing shader uniforms
-    virtual void setupUniformBuffers() override;
+    void SetupUniformBuffers() override;
 
 private:
     vks::TextureCubeMap *environmentCube;
