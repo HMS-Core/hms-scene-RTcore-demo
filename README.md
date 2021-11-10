@@ -44,7 +44,7 @@ adb shell am start -n "com.huawei.rtcore.vkhybridrt/.VulkanActivity"
 ### [Drawing a Triangle using Ray Tracing](examples/triangle)
 This demo shows you how to use RTCore APIs to calculate the intersections between primary rays and triangles, to replace the original rasterization method. Below is the detailed procedure.
 
-<img src="images/trianglepipeline_en.png" width="500px">
+<img src="images/trianglepipeline_en.png" width="850px">
 
 1\. Use the `generatePrimary` function in `RaytracingTriangle.cpp` to calculate primary rays in the World Coordinate System (WCS) based on the camera coordinates and pixel coordinates.
 
@@ -56,13 +56,16 @@ This demo shows you how to use RTCore APIs to calculate the intersections betwee
 * The `prepare` function obtains **compute queue** and call the `Setup` function of RTCore to perform initialization.
 * `buildBVH(vertices, indices, modelMatrix)` first converts vertex coordinates into WCS coordinates, and then calls the `CreateBLAS` and `CreateTLAS` functions to build the bottom-level and top-level acceleration structures, respectively.
 * The `trayRay` function calls the **TraceRays** API of RTCore to calculate the ray intersections and get the calculation result. Below is the result.
-<img src="images/triangle.png" width="500px">
+
+<img src="images/triangle.png" width="850px">
 
 4\. Use graphics pipelines to virtualize the intersections. That is, call the `triangle/VulkanTrianglePipeline` class to process pixels one by one, obtain the intersection calculation result, and show the intersections in a specific color.
 
 ### [Simulating Partial Reflection Based on Hybrid Rendering](examples/hybridreflection)
 This demo builds a set of ray tracing-based hybrid rendering pipelines to implement partial reflection. Below is the detailed procedure.
-<img src="images/hybridpipeline_en.png" width="500px">
+
+<img src="images/hybridpipeline_en.png" width="850px">
+
 1\. Use the traditional rasterization method to implement PBR pipelines (as shown in the area framed by yellow dotted lines). Here is the code:
 
 * `examples/hybridreflection/VulkanScenePipeline`
@@ -79,7 +82,8 @@ This demo builds a set of ray tracing-based hybrid rendering pipelines to implem
 * `examples/hybridreRayTracing/VulkanOnscreenPipeline`
 
 Below is an example of partial reflection:
-<img src="images/hybridreflection.png" width="500px">
+
+<img src="images/hybridreflection.png" width="850px">
 
 ## Reference_Projects
 [1] https://github.com/SaschaWillems/Vulkan
