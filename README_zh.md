@@ -53,7 +53,8 @@ adb shell am start -n "com.huawei.rtcore.vkhybridrt/.VulkanActivity"
 ## 例子
 ### [光线追踪画三角形](examples/triangle)
 本例子展示光线追踪内核最基本的使用，利用光线追踪对主光线与三角形求交来替代原有的光栅化的过程。整体流程如下图所示。
-<img src="images/trianglepipeline_zh.png" width="800px">
+<img src="images/trianglepipeline_zh.png" width="850px">
+
 1\. 通过相机坐标与屏幕上像素点的坐标计算世界坐标系的主光线（RaytracingTriangle.cpp 中 `generatePrimary`函数）；
 
 2\. 将光线从CPU侧拷贝到GPU侧（tiangle.cpp中`updateRayBuffers`函数）；
@@ -64,13 +65,13 @@ adb shell am start -n "com.huawei.rtcore.vkhybridrt/.VulkanActivity"
 * `prepare`函数获取compute queue并调用光追内核的`Setup`函数进行初始化；
 *  `buildBVH(vertices,  indices, modelMatrix)` 首先将顶点转换到世界坐标系，再调用`CreateBLAS`与`CreateTLAS`函数进行底层与顶层加速结构的构建；
 * `trayRay` 函数调用光追内核的TraceRays接口进行求交，然后求交结果, 效果如下图所示：
-<img src="images/triangle.png" width="800px">
+<img src="images/triangle.png" width="850px">
 
 4\. 利用图形管线可视化交点结果，`triangle/VulkanTrianglePipeline`类对整个屏幕逐像素处理获取求交结果并输出颜色。
 
 ### [用混合渲染管线实现局部反射](examples/hybridreflection)
 本例子搭建了一套基于光线追踪的混合渲染管线，实现了光追局部反射的后 处理效果，具体流程如下图。
-<img src="images/hybridpipeline_zh.png" width="800px">
+<img src="images/hybridpipeline_zh.png" width="850px">
 1\. 通过传统光栅化的方法，实现了PBR的渲染管线(图中黄色虚线部分)，具体参考代码： 
 
 * `examples/hybridreRayTracing/HybridRayTracing`
@@ -88,7 +89,7 @@ adb shell am start -n "com.huawei.rtcore.vkhybridrt/.VulkanActivity"
 * `examples/hybridreRayTracing/VulkanOnscreenPipeline`
 
 最终得到反射的效果图如下：
-<img src="images/hybridreflection.png" width="800px">
+<img src="images/hybridreflection.png" width="850px">
 
 ## 参考项目
 [1] https://github.com/SaschaWillems/Vulkan
