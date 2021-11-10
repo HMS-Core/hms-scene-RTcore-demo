@@ -93,7 +93,9 @@ adb shell am start -n "com.huawei.rtcore.vkhybridrt/.VulkanActivity"
 
 ## 参考项目
 [1] https://github.com/SaschaWillems/Vulkan
+
 [2] [learnOpenGL/PBR](https://learnopengl-cn.github.io/07%20PBR/02%20Lighting/#pbr)
+
 [3] https://raytracing.github.io/books/RayTracingInOneWeekend.html
 
 ## 许可证
