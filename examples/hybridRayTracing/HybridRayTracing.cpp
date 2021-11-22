@@ -366,13 +366,6 @@ void HybridRayTracing::UpdateResourceAsyncly()
 
         if (!paused) {
             size_t passId = m_models.index * m_rtShaders.size() + m_rtIndex;
-            if (m_enableAnimate && (!m_models.scene[passId].animations.empty())) {
-                m_animationTimer += frameTimer;
-                if (m_animationTimer > m_models.scene[passId].animations[0].end) {
-                    m_animationTimer -= m_models.scene[passId].animations[0].end;
-                }
-                m_models.scene[passId].updateAnimation(0, m_animationTimer);
-            }
             if (m_enableRT) {
                 m_rayTracingPasses[passId]->UpdateBVH(m_models.scene[passId], m_uboMatrices.scene[passId].model);
             }
@@ -432,7 +425,6 @@ void HybridRayTracing::OnUpdateUIOverlay(vks::UIOverlay *overlay)
         // if enable shader choice. overlay->comboBox("rtShaders", &m_rtIndex, m_rtShaders);
         reBuild |= (overlay->checkBox("RayTrace", &m_enableRT));
 
-        overlay->checkBox("Animate", &m_enableAnimate);
         if (overlay->checkBox("Stat", &m_showStat)) {
             m_rtIndex = m_showStat ? 1 : 0;
             reBuild = true;

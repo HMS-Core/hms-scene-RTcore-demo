@@ -16,7 +16,7 @@ add_library(native-lib SHARED ${EXAMPLE_SRC})
 add_library(native-app-glue STATIC ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
 
 add_subdirectory(../base ${CMAKE_SOURCE_DIR}/../base)
-add_subdirectory(../../../data ${CMAKE_SOURCE_DIR}/../../../data)
+#add_subdirectory(../../../data ${CMAKE_SOURCE_DIR}/../../../data)
 
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate")
 

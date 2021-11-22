@@ -81,7 +81,6 @@ private:
     std::vector<std::unique_ptr<rt::RayTracingPass>> m_rayTracingPasses;        // n_model x n_rtShader
     bool m_enableRT = true;
     float m_downScale = 1.0f;
-    bool m_enableAnimate = false;
     bool m_showStat = false;
     float m_reflectArea = 0.0f;
 

@@ -565,7 +565,7 @@ VulkanExampleBase::VulkanExampleBase(bool enableValidation)
 #endif
 }
 
-VulkanExampleBase::~VulkanExampleBase()
+VulkanExampleBase::~VulkanExampleBase() noexcept
 {
     // Clean up Vulkan resources
     swapChain.cleanup();
