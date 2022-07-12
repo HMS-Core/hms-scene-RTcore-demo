@@ -8,6 +8,7 @@
 * [编译](#编译)
 * [例子](#例子)
 * [参考项目](#参考项目)
+* [技术支持](#技术支持)
 * [许可证](#许可证)
 
 ## 简介
@@ -69,7 +70,7 @@ adb shell am start -n "com.huawei.rtcore.vkhybridrt/.VulkanActivity"
 
 4\. 利用图形管线可视化交点结果，`triangle/VulkanTrianglePipeline`类对整个屏幕逐像素处理获取求交结果并输出颜色。
 
-### [用混合渲染管线实现局部反射](examples/hybridreflection)
+### [用混合渲染管线实现局部反射](examples/hybridRayTracing)
 本例子搭建了一套基于光线追踪的混合渲染管线，实现了光追局部反射的后 处理效果，具体流程如下图。
 <img src="images/hybridpipeline_zh.png" width="850px">
 
@@ -98,6 +99,17 @@ adb shell am start -n "com.huawei.rtcore.vkhybridrt/.VulkanActivity"
 [2] [learnOpenGL/PBR](https://learnopengl-cn.github.io/07%20PBR/02%20Lighting/#pbr)
 
 [3] https://raytracing.github.io/books/RayTracingInOneWeekend.html
+
+## 技术支持
+
+如果您对HMS Core还处于评估阶段，可在[Reddit社区](https://www.reddit.com/r/HuaweiDevelopers/)获取关于HMS Core的最新讯息，并与其他开发者交流见解。
+
+如果您对使用HMS示例代码有疑问，请尝试：
+
+- 开发过程遇到问题上[Stack Overflow](https://stackoverflow.com/questions/tagged/huawei-mobile-services?tab=Votes)，在`huawei-mobile-services`标签下提问，有华为研发专家在线一对一解决您的问题。
+- 到[华为开发者论坛](https://developer.huawei.com/consumer/cn/forum/blockdisplay?fid=18) HMS Core板块与其他开发者进行交流。
+
+如果您在尝试示例代码中遇到问题，请向仓库提交[issue](https://github.com/HMS-Core/hms-scene-fine-grained-demo/issues)，也欢迎您提交[Pull Request](https://github.com/HMS-Core/hms-scene-fine-grained-demo/pulls)。
 
 ## 许可证
 光追内核示例代码采用的许可证为Apache License, version 2.0，参考 [LICENSE.md](LICENSE.md) 获取更多许可证信息；
