@@ -1,5 +1,5 @@
 # Sample Codes for RTCore
-[中文](README_ZH.md) | English
+[中文](README_zh.md) | English
 
 ## Contents
 
