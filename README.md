@@ -3,11 +3,12 @@
 
 ## Contents
 
-* [Introduction](#Introduction)
-* [Compilation](#Compilation)
-* [Demos](#Demos)
-* [Reference_Projects](#Reference_Projects)
-* [License](#License)
+* [Introduction](#introduction)
+* [Compilation](#compilation)
+* [Demos](#demos)
+* [Reference Projects](#reference-projects)
+* [Technical Support](#technical-support)
+* [License](#license)
 
 ## Introduction
 This project mainly demonstrates how to use RTCore APIs to build hybrid rendering pipelines and simulate partial reflection in ray tracing. It provides two demos: one for drawing a triangle using RTCore APIs, and the other for implementing physically based rendering (PBR) pipelines and simulating partial reflection based on hybrid rendering.
@@ -61,7 +62,7 @@ This demo shows you how to use RTCore APIs to calculate the intersections betwee
 
 4\. Use graphics pipelines to virtualize the intersections. That is, call the `triangle/VulkanTrianglePipeline` class to process pixels one by one, obtain the intersection calculation result, and show the intersections in a specific color.
 
-### [Simulating Partial Reflection Based on Hybrid Rendering](examples/hybridreflection)
+### [Simulating Partial Reflection Based on Hybrid Rendering](examples/hybridRayTracing)
 This demo builds a set of ray tracing-based hybrid rendering pipelines to implement partial reflection. Below is the detailed procedure.
 
 <img src="images/hybridpipeline_en.png" width="850px">
@@ -85,12 +86,21 @@ Below is an example of partial reflection:
 
 <img src="images/hybridreflection.png" width="850px">
 
-## Reference_Projects
+## Reference Projects
 [1] https://github.com/SaschaWillems/Vulkan
 
 [2] [learnOpenGL/PBR](https://learnopengl-cn.github.io/07%20PBR/02%20Lighting/#pbr)
 
 [3] https://raytracing.github.io/books/RayTracingInOneWeekend.html
+
+## Technical Support
+
+If you are still evaluating HMS Core, obtain the latest information about HMS Core and share your insights with other developers at [Reddit](https://www.reddit.com/r/HuaweiDevelopers/.).
+
+- To resolve development issues, please go to [Stack Overflow](https://stackoverflow.com/questions/tagged/huawei-mobile-services?tab=Votes). You can ask questions below the huawei-mobile-services tag, and Huawei R&D experts can solve your problem online on a one-to-one basis.
+- To join the developer discussion, please visit [Huawei Developer Forum](https://forums.developer.huawei.com/forumPortal/en/forum/hms-core).
+
+If you have problems using the sample code, submit [issues](https://github.com/HMS-Core/hms-scene-fine--grained-demo/issues) and [pull requests](https://github.com/HMS-Core/hms-scene-fine--grained-demo/pulls) to the repository.
 
 ## License
 The sample code is licensed under Apache License 2.0. Please refer to  [LICENSE.md](LICENSE.md)  for more information.
